@@ -221,7 +221,9 @@ pnpm tauri ios dev          # 发布包用 pnpm tauri ios build
 
 需要 Node ≥ 22.18、pnpm 9、Rust stable ≥ 1.85（Tauri 依赖要求 edition 2024），以及 [Tauri 平台依赖](https://tauri.app/start/prerequisites/)。
 
-一条命令起全套（MySQL 容器 → 同级目录的 outbrief-server → 桌面窗口），托盘里点「退出」或 Ctrl+C 一起停：
+数据库不会由这个仓库创建。先按 [outbrief-server 的本地开发](https://github.com/outbriefapp/outbrief-server#本地开发) 建好名为 `some-mysql` 的 MySQL 8 容器（本机 3306），并执行过一次 `db/bootstrap.sql`。`pnpm dev:all` 只把已经存在的容器拉起来；容器不存在就直接退出。
+
+一条命令起服务端和桌面窗口（同级目录的 outbrief-server → 桌面窗口）。托盘里点「退出」或 Ctrl+C 一起停：
 
 ```bash
 pnpm dev:all        # 即 scripts/dev.sh；服务端日志在 logs/server.log
