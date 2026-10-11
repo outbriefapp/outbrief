@@ -175,6 +175,14 @@ button {
   color: #d7dbe0;
 }
 
+/* The call's speech is still synthesized: it rings once ready (OUTB-67). */
+.hint.preparing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
 /* Scales with the screen so it does not crowd the name on a 320px-wide phone (YOUT-215). */
 .avatar {
   width: clamp(4rem, 22vw, 6rem);
@@ -745,6 +753,13 @@ button {
   to {
     transform: rotate(360deg);
   }
+}
+
+.hint.preparing .spinner {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+  flex: none;
 }
 
 /* Takes the height the reply screen has left, with a floor of about seven lines of the user's own

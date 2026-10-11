@@ -621,6 +621,22 @@ export function App() {
       />
     );
   }
+  // On the phone the service opens the app for a call, over the lock screen too, before its speech
+  // is ready: the call shows from then, ringing once it is (OUTB-67).
+  if (current?.phase === "preparing" && isAndroidApp()) {
+    return (
+      <IncomingCall
+        event={current.event}
+        waitingCount={waiting.length}
+        preparing
+        onAccept={() => undefined}
+        onDecline={() => {
+          preparations.current.get(current.event.id)?.abort();
+          finish("dismissed");
+        }}
+      />
+    );
+  }
   if (current?.phase === "active" && ctx) {
     return (
       <ActiveCall

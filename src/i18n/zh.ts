@@ -108,6 +108,7 @@ export const zh = {
     waiting: (n: number) => `还有 ${n} 个汇报在排队`,
     decline: "拒绝",
     accept: "接听",
+    preparing: "正在准备汇报，准备好就响铃…",
   },
 
   card: {

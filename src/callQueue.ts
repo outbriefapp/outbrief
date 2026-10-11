@@ -236,7 +236,11 @@ export function callReducer(state: CallState, action: CallAction): CallState {
         ? { ...state, current: { ...state.current, phase: "active" } }
         : state;
     case "decline":
-      return state.current?.phase === "ringing" ? next(state) : state;
+      if (state.current?.phase === "ringing") return next(state);
+      // Declined from the preparing screen (OUTB-67): it never rings.
+      return state.current?.phase === "preparing"
+        ? without(state, new Set([state.current.event.id]))
+        : state;
     case "hangUp":
       return state.current?.phase === "active" ? next(state) : state;
   }

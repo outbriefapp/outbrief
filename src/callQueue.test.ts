@@ -122,6 +122,12 @@ describe("callReducer", () => {
     expect(s.waiting).toEqual([]);
   });
 
+  it("declines a report still preparing: it never rings and the next one takes the head", () => {
+    const s = run(arrived(1), arrived(2), prepared(2), { type: "decline" });
+    expect(s.current).toEqual({ event: ev(2), phase: "ringing" });
+    expect(callReducer(s, prepared(1)).current).toEqual({ event: ev(2), phase: "ringing" });
+  });
+
   it("only accepts a ringing call and only hangs up an active one", () => {
     const ringing = run(arrived(1), prepared(1));
     expect(callReducer(ringing, { type: "hangUp" })).toBe(ringing);
