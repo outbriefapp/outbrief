@@ -34,12 +34,15 @@ object AppState {
 }
 
 /**
- * Rings calls the service hears of while the page is not on screen: a full-screen notification
- * (over the lock screen) and the incoming ringtone; while the phone is in use, the app's
- * incoming-call screen pops up over the app in use when it may (`popUp`). It rings until the page opens, another device takes the
- * call, or `RING_TIMEOUT_MS` passes and it becomes a missed-call notification. Outside the ringing
- * time of the modes that are on a call does not ring: it is a silent missed-call notification,
- * as in the app; so is a call heard of more than `RING_WINDOW_MS` after it came in.
+ * Handles calls the service hears of while the page is not on screen. When the app may open over
+ * other apps (`popUp`) it turns the screen on and opens the app, over the lock screen too, and the
+ * page rings once all of the call's speech is synthesized, as it does on screen (OUTB-67): the page
+ * synthesizes the speech, and it is paused in the background. Otherwise it rings itself: a
+ * full-screen notification and the incoming ringtone. Either way the call waits until the page
+ * opens, another device takes the call, or `RING_TIMEOUT_MS` passes and it becomes a missed-call
+ * notification. Outside the ringing time of the modes that are on a call does not ring: it is a
+ * silent missed-call notification, as in the app; so is a call heard of more than
+ * `RING_WINDOW_MS` after it came in.
  */
 object CallAlerts {
   private const val TAG = "OutBriefCalls"
@@ -117,14 +120,15 @@ object CallAlerts {
         return@post
       }
       ringing[id] = caller
-      notify(context, id, CALL_NOTIFICATION, callNotification(context, id, caller, texts))
-      startRinging(context, config)
-      popUp(context, id)
+      if (!popUp(context, id)) {
+        notify(context, id, CALL_NOTIFICATION, callNotification(context, id, caller, texts))
+        startRinging(context, config)
+      }
       HandlerCompat.postDelayed(main, { timedOut(context, id, texts) }, id, RING_TIMEOUT_MS)
     }
   }
 
-  /** Whether a call rings now. On the main thread. */
+  /** Whether a call rings now, or waits for the page it opened. On the main thread. */
   fun isRinging(): Boolean = ringing.isNotEmpty()
 
   /** Another device answered or ended the call `id`: it stops ringing here. */
@@ -197,26 +201,28 @@ object CallAlerts {
     Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(context)
 
   /**
-   * Opens the app's incoming-call screen over whatever the phone shows, as a phone app's incoming
-   * call does (OUTB-65), instead of leaving the call a heads-up notification. Only an app allowed to
-   * show over other apps may open a screen from the background; without it this does nothing. Some
-   * phones (Xiaomi, OPPO, vivo…) also ask for their own 后台弹出界面 permission and silently drop the
-   * start without it.
+   * Opens the app over whatever the phone shows, as a phone app's incoming call does (OUTB-65); the
+   * page rings once the call's speech is ready. Only an app allowed to show over other apps may
+   * open a screen from the background; without it this does nothing and returns false. Some phones
+   * (Xiaomi, OPPO, vivo…) also ask for their own 后台弹出界面 permission and silently drop the start
+   * without it.
    *
    * Over the lock screen, or with the screen off, it opens the screen too (OUTB-67): the full-screen
    * intent alone is not enough, since Android 14 no longer grants it to apps that are not a phone or
    * alarm app (a Samsung phone only showed a notification and left the screen off). `LockScreen` lets
    * the window show over the lock screen and turn the screen on; the screen is also woken here.
    */
-  private fun popUp(context: Context, id: String) {
-    if (!mayPopUp(context)) return
+  private fun popUp(context: Context, id: String): Boolean {
+    if (!mayPopUp(context)) return false
     val power = context.getSystemService(PowerManager::class.java)
     val keyguard = context.getSystemService(KeyguardManager::class.java)
     if (!power.isInteractive || keyguard.isKeyguardLocked) wakeScreen(power)
-    try {
+    return try {
       context.startActivity(launchIntent(context, id))
+      true
     } catch (e: Exception) {
       Log.w(TAG, "pop up the call", e)
+      false
     }
   }
 

@@ -11,6 +11,7 @@ import { isRingAllowed, switchOn } from "./callModes.ts";
 import { callReducer, initialCallState, missedCalls, reportsToPrepare } from "./callQueue.ts";
 import {
   isAndroidApp,
+  keepScreenOn,
   shownStatus,
   takeServiceInbox,
   useCallService,
@@ -510,6 +511,12 @@ export function App() {
       requestCallAttention().catch((err) => console.warn("[outbrief] attention", err));
     }
   }, [ringingId]);
+  // The service opens the app for a call and the page rings once its speech is ready (OUTB-67): the
+  // screen stays on from then until the call ends.
+  const inCall = state.current !== null;
+  useEffect(() => {
+    keepScreenOn(inCall).catch((err: unknown) => console.warn("[outbrief] keep screen on", err));
+  }, [inCall]);
   // The service rings a paused page's calls itself; the page's own tone would play on top of it.
   useRingtone(ringingId && (visible || !backgroundCalls) ? settings.ringtones.incoming : null);
 

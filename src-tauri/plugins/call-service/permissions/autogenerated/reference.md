@@ -10,6 +10,7 @@ Everything the app's own page uses.
 - `allow-request-notifications`
 - `allow-open-settings`
 - `allow-take-inbox`
+- `allow-keep-screen-on`
 
 ## Permission Table
 
@@ -68,6 +69,32 @@ Enables the get_status command without any pre-configured scope.
 <td>
 
 Denies the get_status command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`call-service:allow-keep-screen-on`
+
+</td>
+<td>
+
+Enables the keep_screen_on command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`call-service:deny-keep-screen-on`
+
+</td>
+<td>
+
+Denies the keep_screen_on command without any pre-configured scope.
 
 </td>
 </tr>

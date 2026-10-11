@@ -319,6 +319,18 @@
           "markdownDescription": "Denies the get_status command without any pre-configured scope."
         },
         {
+          "description": "Enables the keep_screen_on command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-keep-screen-on",
+          "markdownDescription": "Enables the keep_screen_on command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the keep_screen_on command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-keep-screen-on",
+          "markdownDescription": "Denies the keep_screen_on command without any pre-configured scope."
+        },
+        {
           "description": "Enables the open_settings command without any pre-configured scope.",
           "type": "string",
           "const": "allow-open-settings",
@@ -367,10 +379,10 @@
           "markdownDescription": "Denies the take_inbox command without any pre-configured scope."
         },
         {
-          "description": "Everything the app's own page uses.\n#### This default permission set includes:\n\n- `allow-configure`\n- `allow-set-ringtone`\n- `allow-get-status`\n- `allow-request-notifications`\n- `allow-open-settings`\n- `allow-take-inbox`",
+          "description": "Everything the app's own page uses.\n#### This default permission set includes:\n\n- `allow-configure`\n- `allow-set-ringtone`\n- `allow-get-status`\n- `allow-request-notifications`\n- `allow-open-settings`\n- `allow-take-inbox`\n- `allow-keep-screen-on`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Everything the app's own page uses.\n#### This default permission set includes:\n\n- `allow-configure`\n- `allow-set-ringtone`\n- `allow-get-status`\n- `allow-request-notifications`\n- `allow-open-settings`\n- `allow-take-inbox`"
+          "markdownDescription": "Everything the app's own page uses.\n#### This default permission set includes:\n\n- `allow-configure`\n- `allow-set-ringtone`\n- `allow-get-status`\n- `allow-request-notifications`\n- `allow-open-settings`\n- `allow-take-inbox`\n- `allow-keep-screen-on`"
         }
       ]
     }

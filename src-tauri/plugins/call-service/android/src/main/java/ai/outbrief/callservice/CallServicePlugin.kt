@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Base64
+import android.view.WindowManager
 import android.webkit.WebView
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.Lifecycle
@@ -101,6 +102,20 @@ class CallServicePlugin(private val activity: Activity) : Plugin(activity) {
   @Command
   fun takeInbox(invoke: Invoke) {
     invoke.resolve(JSObject().put("entries", CallInbox.take(activity)))
+  }
+
+  /**
+   * `{ on }`: keeps the screen on while a call prepares, rings or is answered, so it does not go dark
+   * over the lock screen, which turns it off after a few seconds (OUTB-67).
+   */
+  @Command
+  fun keepScreenOn(invoke: Invoke) {
+    val on = invoke.getArgs().optBoolean("on", false)
+    activity.runOnUiThread {
+      val flag = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+      if (on) activity.window.addFlags(flag) else activity.window.clearFlags(flag)
+      invoke.resolve()
+    }
   }
 
   /** `{ id, audio }`: the incoming ringtone's file, base64, for the service to ring with. */
