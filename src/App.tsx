@@ -8,9 +8,16 @@ import { prepareSpeech } from "./call/prepare.ts";
 import { endedCall, loadCallRecord, saveCallRecord, updateCallRecord } from "./call/records.ts";
 import type { CallContext } from "./call/useCall.ts";
 import { isRingAllowed, switchOn } from "./callModes.ts";
-import { callReducer, initialCallState, missedCalls, reportsToPrepare } from "./callQueue.ts";
+import {
+  callReducer,
+  initialCallState,
+  missedCalls,
+  RING_TIMEOUT_MS,
+  reportsToPrepare,
+} from "./callQueue.ts";
 import {
   isAndroidApp,
+  keepScreenOn,
   shownStatus,
   takeServiceInbox,
   useCallService,
@@ -506,10 +513,25 @@ export function App() {
 
   const ringingId = state.current?.phase === "ringing" ? state.current.event.id : null;
   useEffect(() => {
-    if (ringingId) {
-      requestCallAttention().catch((err) => console.warn("[outbrief] attention", err));
-    }
+    if (!ringingId) return;
+    requestCallAttention().catch((err) => console.warn("[outbrief] attention", err));
+    // Unanswered it becomes a missed call, like a phone call; the screen may then go dark (OUTB-67).
+    const timer = setTimeout(
+      () => dispatch({ type: "ringTimedOut", id: ringingId }),
+      RING_TIMEOUT_MS,
+    );
+    return () => clearTimeout(timer);
   }, [ringingId]);
+  // The service opens the app for a call and the page rings once its speech is ready (OUTB-67): the
+  // screen stays on from then until the call ends.
+  // When the call ends (answered, declined or missed) the lock screen comes back.
+  const inCall = state.current !== null;
+  const wasInCall = useRef(false);
+  useEffect(() => {
+    if (inCall === wasInCall.current) return;
+    wasInCall.current = inCall;
+    keepScreenOn(inCall).catch((err: unknown) => console.warn("[outbrief] keep screen on", err));
+  }, [inCall]);
   // The service rings a paused page's calls itself; the page's own tone would play on top of it.
   useRingtone(ringingId && (visible || !backgroundCalls) ? settings.ringtones.incoming : null);
 
@@ -611,6 +633,22 @@ export function App() {
           claim(current.event.id);
         }}
         onDecline={() => finish("dismissed")}
+      />
+    );
+  }
+  // On the phone the service opens the app for a call, over the lock screen too, before its speech
+  // is ready: the call shows from then, ringing once it is (OUTB-67).
+  if (current?.phase === "preparing" && isAndroidApp()) {
+    return (
+      <IncomingCall
+        event={current.event}
+        waitingCount={waiting.length}
+        preparing
+        onAccept={() => undefined}
+        onDecline={() => {
+          preparations.current.get(current.event.id)?.abort();
+          finish("dismissed");
+        }}
       />
     );
   }

@@ -12,8 +12,9 @@ import type { ConnectionStatus, ServerSettings } from "./serverClient.ts";
 /**
  * The Android app's background call service (OUTB-60, `src-tauri/plugins/call-service`): while
  * the page is not on screen the system pauses the webview and its event stream, so a foreground
- * service follows the stream natively and rings calls as full-screen notifications. The page hands
- * it what it needs here: the server and token, the end-to-end key (for the caller's name), the
+ * service follows the stream natively. For a call it opens the app, over the lock screen too, and
+ * the page rings once the speech is synthesized (OUTB-67); without 显示在其他应用上层 it rings the call
+ * itself as a full-screen notification. The page hands it what it needs here: the server and token, the end-to-end key (for the caller's name), the
  * modes that are on (calls outside their ringing time do not ring) and the incoming ringtone.
  */
 
@@ -81,6 +82,16 @@ export function getCallServiceStatus(): Promise<CallServiceStatus> {
 export async function takeServiceInbox(): Promise<InboxEntry[]> {
   if (!isAndroidApp()) return [];
   return (await invoke<{ entries: InboxEntry[] }>("plugin:call-service|take_inbox")).entries;
+}
+
+/**
+ * Keeps the screen on while a call prepares, rings or is answered: over the lock screen it would go
+ * dark after a few seconds (OUTB-67). Turned off when the call ends, it also puts the app back
+ * behind the lock screen. A no-op outside the Android app.
+ */
+export async function keepScreenOn(on: boolean): Promise<void> {
+  if (!isAndroidApp()) return;
+  await invoke("plugin:call-service|keep_screen_on", { on });
 }
 
 /** Asks for the notification permission (a no-op once answered); resolves the status after. */

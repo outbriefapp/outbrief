@@ -122,6 +122,24 @@ describe("callReducer", () => {
     expect(s.waiting).toEqual([]);
   });
 
+  it("declines a report still preparing: it never rings and the next one takes the head", () => {
+    const s = run(arrived(1), arrived(2), prepared(2), { type: "decline" });
+    expect(s.current).toEqual({ event: ev(2), phase: "ringing" });
+    expect(callReducer(s, prepared(1)).current).toEqual({ event: ev(2), phase: "ringing" });
+  });
+
+  it("turns a call ringing unanswered into a missed call that answers at once", () => {
+    const s = run(arrived(1), prepared(1), arrived(2), prepared(2), {
+      type: "ringTimedOut",
+      id: "e1",
+    });
+    expect(s.current).toEqual({ event: ev(2), phase: "ringing" });
+    expect(s.missed.map((e) => e.id)).toEqual(["e1"]);
+    expect(callReducer(s, { type: "ringTimedOut", id: "e1" })).toBe(s);
+    const answered = callReducer(callReducer(s, { type: "decline" }), { type: "answer", id: "e1" });
+    expect(answered.current).toEqual({ event: ev(1), phase: "active" });
+  });
+
   it("only accepts a ringing call and only hangs up an active one", () => {
     const ringing = run(arrived(1), prepared(1));
     expect(callReducer(ringing, { type: "hangUp" })).toBe(ringing);

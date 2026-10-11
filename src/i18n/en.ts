@@ -105,6 +105,7 @@ export const en: Messages = {
     waiting: (n) => `${plural(n, "more report", "more reports")} waiting`,
     decline: "Decline",
     accept: "Answer",
+    preparing: "Preparing the report, it rings once ready…",
   },
 
   card: {

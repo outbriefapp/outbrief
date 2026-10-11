@@ -9,4 +9,5 @@ permissions = [
     "allow-request-notifications",
     "allow-open-settings",
     "allow-take-inbox",
+    "allow-keep-screen-on",
 ]
