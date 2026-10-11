@@ -60,6 +60,8 @@ object CallAlerts {
    */
   private const val RING_WINDOW_MS = 2 * 60_000L
   const val RINGTONE_FILE = "outbrief-ringtone"
+  /** How long the screen is woken for a call, until the incoming-call screen keeps it on. */
+  private const val WAKE_SCREEN_MS = 10_000L
 
   private val main = Handler(Looper.getMainLooper())
   /** Calls ringing now, by event id. */
@@ -197,20 +199,34 @@ object CallAlerts {
   /**
    * Opens the app's incoming-call screen over whatever the phone shows, as a phone app's incoming
    * call does (OUTB-65), instead of leaving the call a heads-up notification. Only an app allowed to
-   * show over other apps may open a screen from the background; without it, or over the lock screen
-   * (where the full-screen intent opens it already), this does nothing. Some phones (Xiaomi, OPPO,
-   * vivo…) also ask for their own 后台弹出界面 permission and silently drop the start without it.
+   * show over other apps may open a screen from the background; without it this does nothing. Some
+   * phones (Xiaomi, OPPO, vivo…) also ask for their own 后台弹出界面 permission and silently drop the
+   * start without it.
+   *
+   * Over the lock screen, or with the screen off, it opens the screen too (OUTB-67): the full-screen
+   * intent alone is not enough, since Android 14 no longer grants it to apps that are not a phone or
+   * alarm app (a Samsung phone only showed a notification and left the screen off). `LockScreen` lets
+   * the window show over the lock screen and turn the screen on; the screen is also woken here.
    */
   private fun popUp(context: Context, id: String) {
     if (!mayPopUp(context)) return
     val power = context.getSystemService(PowerManager::class.java)
     val keyguard = context.getSystemService(KeyguardManager::class.java)
-    if (!power.isInteractive || keyguard.isKeyguardLocked) return
+    if (!power.isInteractive || keyguard.isKeyguardLocked) wakeScreen(power)
     try {
       context.startActivity(launchIntent(context, id))
     } catch (e: Exception) {
       Log.w(TAG, "pop up the call", e)
     }
+  }
+
+  /** Turns the screen on for a few seconds, until the incoming-call screen keeps it on. */
+  @Suppress("DEPRECATION")
+  private fun wakeScreen(power: PowerManager) {
+    power.newWakeLock(
+      PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+      "outbrief:call-screen",
+    ).acquire(WAKE_SCREEN_MS)
   }
 
   /** Opens the app; the page shows the call. */

@@ -71,7 +71,11 @@ object LockScreen {
       over.remove(a)
     }
 
-    override fun onActivityStarted(a: Activity) {}
+    // Brought back from behind the lock screen for a call (the process was alive): the flags must be
+    // set before it shows, not once the page handles the call's intent.
+    override fun onActivityStarted(a: Activity) {
+      if (CallAlerts.isRinging() && a !in over) show(a)
+    }
     override fun onActivityResumed(a: Activity) {}
     override fun onActivityPaused(a: Activity) {}
     override fun onActivitySaveInstanceState(a: Activity, state: Bundle) {}
