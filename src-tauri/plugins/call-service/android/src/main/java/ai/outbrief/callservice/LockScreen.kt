@@ -35,6 +35,12 @@ object LockScreen {
     if (intent?.hasExtra(CallAlerts.EXTRA_CALL) == true) Callbacks.show(activity)
   }
 
+  /**
+   * The call shown over the lock screen ended (answered, declined or missed): the lock screen comes
+   * back at once, so the app is not left usable without unlocking the phone.
+   */
+  fun callEnded(activity: Activity) = Callbacks.hide(activity)
+
   @Suppress("DEPRECATION")
   private fun set(activity: Activity, on: Boolean) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
@@ -60,6 +66,10 @@ object LockScreen {
     // was first opened with, and the call's own only later: a call ringing now is what tells.
     override fun onActivityCreated(a: Activity, state: Bundle?) {
       if (CallAlerts.isRinging() || a.intent?.hasExtra(CallAlerts.EXTRA_CALL) == true) show(a)
+    }
+
+    fun hide(a: Activity) {
+      if (over.remove(a)) set(a, false)
     }
 
     override fun onActivityStopped(a: Activity) {

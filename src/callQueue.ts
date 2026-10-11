@@ -57,8 +57,13 @@ export type CallAction =
    */
   | { type: "reconciled"; pending: ReadonlySet<string>; upToSeq: number }
   | { type: "accept" }
+  /** The call `id` rang `RING_TIMEOUT_MS` unanswered: it is missed, like a phone call (OUTB-67). */
+  | { type: "ringTimedOut"; id: string }
   | { type: "decline" }
   | { type: "hangUp" };
+
+/** About as long as a phone rings before the call counts as missed (the service's `RING_TIMEOUT_MS`). */
+export const RING_TIMEOUT_MS = 60_000;
 
 export const initialCallState: CallState = {
   current: null,
@@ -235,6 +240,12 @@ export function callReducer(state: CallState, action: CallAction): CallState {
       return state.current?.phase === "ringing"
         ? { ...state, current: { ...state.current, phase: "active" } }
         : state;
+    case "ringTimedOut": {
+      const { current } = state;
+      if (current?.phase !== "ringing" || current.event.id !== action.id) return state;
+      // Its speech stays prepared: answered from the missed calls it plays at once.
+      return reorder({ ...state, current: null, missed: [...state.missed, current.event] });
+    }
     case "decline":
       if (state.current?.phase === "ringing") return next(state);
       // Declined from the preparing screen (OUTB-67): it never rings.

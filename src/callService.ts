@@ -86,7 +86,8 @@ export async function takeServiceInbox(): Promise<InboxEntry[]> {
 
 /**
  * Keeps the screen on while a call prepares, rings or is answered: over the lock screen it would go
- * dark after a few seconds (OUTB-67). A no-op outside the Android app.
+ * dark after a few seconds (OUTB-67). Turned off when the call ends, it also puts the app back
+ * behind the lock screen. A no-op outside the Android app.
  */
 export async function keepScreenOn(on: boolean): Promise<void> {
   if (!isAndroidApp()) return;

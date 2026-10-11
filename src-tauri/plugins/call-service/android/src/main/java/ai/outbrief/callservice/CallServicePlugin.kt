@@ -113,7 +113,12 @@ class CallServicePlugin(private val activity: Activity) : Plugin(activity) {
     val on = invoke.getArgs().optBoolean("on", false)
     activity.runOnUiThread {
       val flag = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-      if (on) activity.window.addFlags(flag) else activity.window.clearFlags(flag)
+      if (on) {
+        activity.window.addFlags(flag)
+      } else {
+        activity.window.clearFlags(flag)
+        LockScreen.callEnded(activity)
+      }
       invoke.resolve()
     }
   }
