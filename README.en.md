@@ -45,9 +45,10 @@ The phone app is this same project. The Android and iOS projects are not checked
 pnpm install
 pnpm tauri android init
 pnpm tauri icon app-icon.json   # init writes Tauri's default icons; this swaps in OutBrief's
-pnpm tauri android dev      # device or emulator; scripts/build-android.sh for an installable APK
+pnpm tauri android dev      # device or emulator; export OUTBRIEF_FIREBASE_CONFIG first to include call pushes
+scripts/build-android.sh    # installable APK with call pushes; see Android package
 pnpm tauri ios init
-pnpm tauri ios dev          # pnpm tauri ios build for a release
+pnpm tauri ios dev          # pnpm tauri ios build for a release. This version has no call pushes on iOS
 ```
 
 This repo does not ship a store binary.
@@ -71,6 +72,22 @@ The app can create the account instead. On the welcome screen, enter the server 
 Phone only, no desktop app: deploy the server, `login` the daemon, and scan the QR code in the terminal. Multica, the LLM, and the report language on the phone are encrypted and relayed through the server to that computer's daemon. The computer has to be online. When the account has several computers, pick one at the top of the settings page.
 
 On a public server, set `OUTBRIEF_OPEN_SIGNUP=true`. The first device creates an account with no claim code.
+
+### Calls while the phone app is in the background
+
+With the app on screen, calls arrive on the event stream. Desktop and phone both ring. Nothing else to turn on.
+
+On Android, calls still ring after the app is swiped away or the screen is off:
+
+1. Open Settings → Background calls and turn on receiving calls while the app is in the background or on the lock screen.
+2. On the same page, allow Notifications, Incoming call on the lock screen, and Pop up incoming calls. Pop up is the system permission to display over other apps. On Xiaomi, OPPO, and vivo, also allow popping up in the background.
+3. Set battery use to Unrestricted. Some phones also need OutBrief allowed to auto-start and run in the background.
+4. Read Push wake-up on that page:
+   - **On**: the server can wake the phone with a Google push after the app process is gone. No second app to install.
+   - **Off**: open the app once and look again. Still off means this server has no `OUTBRIEF_FCM_SERVICE_ACCOUNT`, or the APK's Firebase project is not the server's.
+   - **Not in this build**: the APK was built without `google-services.json`. Calls arrive only while the app is open and holding its event stream.
+
+The phone needs Google Play services. This version has no push wake-up on iOS, so a call arrives there only while the app is open. A call this phone hears of more than 2 minutes after the server received it does not ring. It is listed under missed calls, and you can answer it from there.
 
 After pairing, the pages you fill in on each device:
 
@@ -194,9 +211,10 @@ A desktop window started on its own joins or creates an account as in Accounts a
 
 `scripts/build-android.sh` builds an arm64 release APK you install on a phone. It is not a store build. Install rustup first (`rustup target add aarch64-linux-android`; Homebrew's rust has no Android target), JDK 17, the Android SDK (`platforms;android-36`, `build-tools`), and the NDK. Point `ANDROID_HOME`, `NDK_HOME`, and `JAVA_HOME` at them.
 
-- The server URL defaults to `https://api.outbriefapp.com`. Override it with `VITE_OUTBRIEF_SERVER_URL`. A phone cannot open the computer's `localhost`. After install, open Settings → Devices → Add a device on the computer and scan the code.
+- The server URL defaults to `https://api.outbriefapp.com`. Override it with `VITE_OUTBRIEF_SERVER_URL`. A phone cannot open the computer's `localhost`. That default server already has an owner, so a new account cannot be created on it. Point a server you deploy at your own URL. Join an existing account with a pairing code. After install, open Settings → Devices → Add a device on the computer and scan the code.
 - `src-tauri/gen/` is not in the repo. The script runs `tauri android init` when that directory is missing, regenerates icons from `app-icon.json`, then adds the camera and microphone permissions and the release signature. The first build creates the keystore under `~/.outbrief-android/` with a random password, outside the repo. Later builds keep that key, so an update can replace the installed app.
-- Call pushes (ADR 0010 of outbrief-server): with the app swiped away or the phone asleep, the server wakes the phone with Firebase Cloud Messaging. In the Firebase console, add an Android app for `ai.outbrief.app`, download its `google-services.json` to `~/.outbrief-android/firebase/google-services.json`, or point `OUTBRIEF_FIREBASE_CONFIG` at it. The file stays out of the repo. Without it the APK has no pushes. Give the server the service account key of the same Firebase project in `OUTBRIEF_FCM_SERVICE_ACCOUNT`. The phone needs Google Play services. Settings → Background calls → Push wake-up shows whether it is on.
+- Call pushes (ADR 0010 of outbrief-server) are included by `scripts/build-android.sh`. The script reads `~/.outbrief-android/firebase/google-services.json`, or the file named by `OUTBRIEF_FIREBASE_CONFIG`, and passes it to the build. `pnpm tauri android dev` and `pnpm tauri android build` do not read that default path. Export `OUTBRIEF_FIREBASE_CONFIG` yourself, or the APK has no pushes.
+- In the Firebase console, add an Android app with package name `ai.outbrief.app` and put the downloaded `google-services.json` at that path. Give the server the service account key of the same Firebase project, the whole JSON, in `OUTBRIEF_FCM_SERVICE_ACCOUNT`. A token registered from a different Firebase project never receives that server's pushes. The file stays out of the repo. Without it the APK still installs, and calls arrive only while the app is open and holding its event stream. An APK aimed at `https://api.outbriefapp.com` has to be built with that server's Firebase project. A project you create yourself cannot be woken by the official server. How to check on the phone is under [Calls while the phone app is in the background](#calls-while-the-phone-app-is-in-the-background).
 - Android's system WebView implements `BarcodeDetector` with Google Play services. Declaring it without Play services crashes on scan, and many phones have no Play services. The Android build decodes QR codes with `qr-scanner`'s own worker (`src/components/QrScanner.tsx`).
 
 ## Commands
@@ -208,7 +226,7 @@ A desktop window started on its own joins or creates an account as in Accounts a
 | `pnpm dev` | UI only, in a browser |
 | `pnpm tauri build` | Desktop installers |
 | `pnpm tauri android init` / `ios init` | Generate the local mobile project. Then `dev` or `build`. See [Install this repo](#install-this-repo) |
-| `scripts/build-android.sh` | Build an installable arm64 APK at `dist-android/OutBrief.apk` (server defaults to `https://api.outbriefapp.com`; adds camera / microphone permissions and signs with a key kept in `~/.outbrief-android/`, outside the repo) |
+| `scripts/build-android.sh` | Build a signed arm64 APK at `dist-android/OutBrief.apk` and include call pushes. See [Android package](#android-package) |
 | `pnpm lint` / `pnpm format` | Biome check / write |
 | `pnpm typecheck` | `tsc` |
 | `pnpm test` | Vitest |
