@@ -1,0 +1,96 @@
+---
+title: 快速开始
+description: 部署 server、装好 daemon 和 App、把设备配对进同一个账号，接到第一通来电。
+sidebar:
+  order: 1
+---
+
+import { Aside, LinkCard, CardGrid, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+照着下面的步骤做完，你的 Agent 每次结束任务都会给你打一通电话。
+
+## 准备
+
+- 一台跑 Claude Code、Codex 或 Multica Agent 的电脑，装好 Node ≥ 22.18 和 pnpm 9
+- 一部 Android 手机，或者一台 Apple Silicon 的 Mac（也可以两个都有）
+- 一个兼容 OpenAI 接口的大模型 Key，用来写简报。没有也能用，来电时会直接念汇报原文
+
+<Aside type="note" title="来电只在同一个账号里转发">
+OutBrief 没有登录。第一台设备创建一个匿名账号，后来的设备都用配对码加入这个账号。推荐让跑 Agent 的那台电脑上的 daemon 来创建账号。
+</Aside>
+
+## 安装步骤
+
+<Steps>
+
+1. **准备 server**
+
+   <Tabs syncKey="server">
+   <TabItem label="自己部署">
+
+   在一台手机和电脑都能访问的机器上部署 [outbrief-server](/docs/server/)，只跑一个进程。第一次启动时，日志里会打印一个一次性认领码：
+
+   ```text
+   Claim code: XXXX-XXXX-XXXX
+   ```
+
+   记下这个认领码和服务地址。`http://127.0.0.1:8787` 只有本机能访问；要给手机用，就填局域网 IP，或者公网的 `https://` 地址。
+
+   </TabItem>
+   <TabItem label="已经有服务器">
+
+   别人已经部署好了 server（比如 `https://api.outbriefapp.com`），就跳过这一步，后面填它的地址。
+
+   这种 server 一般已经关闭了注册，你需要请它的主人在「设置 → 设备 → 添加设备」里给你一个配对码，用配对码加入。
+
+   </TabItem>
+   </Tabs>
+
+2. **在跑 Agent 的电脑上安装 daemon**
+
+   ```bash
+   git clone https://github.com/outbriefapp/outbrief-daemon
+   cd outbrief-daemon
+   pnpm install
+   node src/cli.ts login --server <服务地址>
+   node src/cli.ts install
+   ```
+
+   - `login` 会提示你输入认领码。成功后，终端里会显示一个二维码和 6 位配对码，第 4 步用得到。
+   - `install`（macOS）让 daemon 开机自启，并接上 Claude Code 和 Codex。Linux 和 Windows 的装法见 [安装 Daemon](/docs/daemon/)。
+
+3. **在同一台电脑上安装桌面 App**
+
+   从 [下载页](/download/) 下载 macOS 安装包并打开。daemon 已经在运行时，桌面 App 第一次打开就会自动加入同一个账号，什么都不用填。
+
+4. **安装手机 App 并扫码**
+
+   从 [下载页](/download/) 下载 Android 安装包。装好后用手机扫描以下任一位置的二维码：
+
+   - 桌面 App 的「设置 → 设备 → 添加设备」
+   - 电脑终端里执行 `node src/cli.ts pair` 后显示的二维码
+
+   想在 App 被划掉或锁屏时也能响铃，再按 [手机后台响铃](/docs/guides/background-calls/) 打开几项系统权限。
+
+5. **设置大模型**
+
+   在任意一台设备的 App 里打开「设置 → 大模型」，选服务商、填 Key，点「测试连接」，再保存。保存后会同步到电脑上的 daemon，下一份简报马上生效。详见 [大模型设置](/docs/guides/llm/)。
+
+   语音默认用免费的 Azure 声音，不用配置。想换平台见 [语音设置](/docs/guides/voice/)。
+
+6. **接第一通电话**
+
+   在电脑上让 Claude Code 或 Codex 做一件小事。它结束时，你的设备就会响铃。
+
+</Steps>
+
+<Aside type="caution" title="自己部署 server 时的手机推送">
+下载页的 Android 安装包带的是官方服务器的推送配置。连到你自己部署的 server 时，App 开着就能正常接到来电；App 被划掉后，要靠推送叫醒手机，这就需要用你自己的 Firebase 项目重新打包，见 [本地开发与打包](/docs/development/#android-安装包)。
+</Aside>
+
+## 下一步
+
+<CardGrid>
+  <LinkCard title="配对更多设备" description="另一台电脑、只有手机、只有 6 位数字时怎么加入。" href="/docs/guides/pairing/" />
+  <LinkCard title="接听来电" description="通话里能做什么，没接到的来电去哪了。" href="/docs/guides/calls/" />
+</CardGrid>

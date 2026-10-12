@@ -1,0 +1,75 @@
+---
+title: Multica 与呼叫 Agent
+description: 接上 Multica 工作区，让 Multica 的任务来电；在 App 里说一句话就能给 Agent 派单。
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps } from "@astrojs/starlight/components";
+import Screen from "../../../../components/Screen.astro";
+import dispatch from "../../../../assets/screens/dispatch.jpg";
+import dispatched from "../../../../assets/screens/dispatched.jpg";
+import followup from "../../../../assets/screens/followup.jpg";
+
+## 接上 Multica
+
+接上之后，Multica 上的 Agent 完成任务时也会给你打电话，挂断后的回复会作为评论发回原 issue。
+
+<Steps>
+
+1. 在 App 里打开「设置 → Multica」，填你自己的 Multica API Token，点「验证令牌」。
+2. 勾选要监听的工作区，可以多选。
+3. 保存。
+
+</Steps>
+
+之后想换工作区，点「更改工作区」就行，不用再填一次令牌。
+
+<Aside type="note" title="令牌存在哪">
+令牌只保存在你电脑上的 daemon 里（`~/.outbrief/daemon.json`，权限 600），不会以明文经过 server。App 里只显示 `mul_…xxxx` 这样的尾号。
+
+daemon 用它监听 Multica 任务、发回复，所以电脑关机或 daemon 没运行时，Multica 任务不会来电。
+</Aside>
+
+同时监听多个工作区时，来电会在项目名前面标出工作区。
+
+## 呼叫 Agent：说一句话派个任务
+
+<Screen src={dispatch} alt="呼叫 Agent 页：选项目和 Agent，输入需求" caption="选好项目和 Agent，说出需求，点绿色按钮呼叫。" />
+
+空闲页正中间的绿色电话按钮就是「呼叫 Agent」：
+
+<Steps>
+
+1. 项目和 Agent 默认用上一次派单时选的，要换就点开底部面板。
+2. 在文本框里说出需求，可以用手机输入法的语音输入。优先级、截止日期也可以一起说。
+3. 需要的话附上图片。桌面端可以直接粘贴截图，或者拖进文本框。
+4. 点「呼叫并派单」。
+
+</Steps>
+
+选中的 Agent 会根据你的原话写 issue，标题、优先级、截止日期都由它从原话里提取。「呼叫中」会等到 issue 建好，然后显示编号和标题。不想等的话，可以先去「我的派单」。
+
+<Screen src={dispatched} alt="派单成功页，显示新建 issue 的编号和标题" caption="Agent 接单后，显示新建的 issue。" />
+
+## 在已有 issue 上接着说
+
+<Screen src={followup} alt="选择已有 issue 继续补充" caption="选中原来的 issue，你说的话会作为评论发过去。" />
+
+在派单页选一个已有的 issue，你说的话会作为评论发到这个 issue 上，由 Multica 照常交给它指派的 Agent 处理。可以按标题、编号（如 `61`、`OUTB-61`）或状态筛选 issue。
+
+## 我的派单
+
+「我的派单」列出从这台电脑派出的所有单，以及这些 issue 现在的状态。同一账号里的设备都能看到。
+
+## 按钮是灰色的？
+
+下面这些情况，派单按钮会禁用，页面上会写明原因。情况恢复后会自动变回可用：
+
+- 电脑离线，或者本机 daemon 没在运行
+- 电脑上还没设置 Multica
+- 选中的 Agent 所在的电脑在 Multica 里不在线
+
+<Aside type="tip">
+图片张数不限，每张最大 100 MB，和 Multica 自己的限制一致。较大的图片会先在本机压缩，再传到 Multica。
+</Aside>

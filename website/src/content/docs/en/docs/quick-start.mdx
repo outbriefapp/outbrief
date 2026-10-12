@@ -1,0 +1,96 @@
+---
+title: Quick start
+description: Set up the server, install the daemon and the app, pair your devices into one account, and get your first call.
+sidebar:
+  order: 1
+---
+
+import { Aside, LinkCard, CardGrid, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+When you finish these steps, your agent calls you every time it finishes a task.
+
+## What you need
+
+- A computer that runs Claude Code, Codex, or a Multica agent, with Node ≥ 22.18 and pnpm 9
+- An Android phone, an Apple Silicon Mac, or both
+- An OpenAI-compatible LLM key to write briefs. Without one, calls still ring and read the raw report
+
+<Aside type="note" title="Calls stay inside one account">
+There is no login. The first device creates an anonymous account, and later devices join it with a pairing code. Let the daemon on the computer that runs the agents create the account.
+</Aside>
+
+## Steps
+
+<Steps>
+
+1. **Get a server**
+
+   <Tabs syncKey="server">
+   <TabItem label="Host your own">
+
+   Deploy [outbrief-server](/en/docs/server/) on a machine your phone and computer can both reach. Run exactly one process. On first start, the log prints a one-time claim code:
+
+   ```text
+   Claim code: XXXX-XXXX-XXXX
+   ```
+
+   Write down the claim code and the server URL. `http://127.0.0.1:8787` only works on that machine. For a phone, use a LAN IP or a public `https://` URL.
+
+   </TabItem>
+   <TabItem label="Use an existing server">
+
+   Someone already runs a server (for example `https://api.outbriefapp.com`). Skip this step and use its URL below.
+
+   Signup is usually closed on such a server. Ask its owner for a pairing code from Settings → Devices → Add a device.
+
+   </TabItem>
+   </Tabs>
+
+2. **Install the daemon on the computer that runs the agents**
+
+   ```bash
+   git clone https://github.com/outbriefapp/outbrief-daemon
+   cd outbrief-daemon
+   pnpm install
+   node src/cli.ts login --server <server-url>
+   node src/cli.ts install
+   ```
+
+   - `login` asks for the claim code. Then the terminal shows a QR code and a 6-digit code for step 4.
+   - `install` (macOS) starts the daemon at login and hooks up Claude Code and Codex. For Linux and Windows, see [Install the daemon](/en/docs/daemon/).
+
+3. **Install the desktop app on the same computer**
+
+   Download the macOS installer from the [download page](/en/download/) and open it. With the daemon running, the desktop app joins the same account on first launch. Nothing to fill in.
+
+4. **Install the phone app and scan**
+
+   Download the Android package from the [download page](/en/download/). After install, scan a QR code from either place:
+
+   - Settings → Devices → Add a device in the desktop app
+   - `node src/cli.ts pair` in a terminal on the computer
+
+   To ring when the app is swiped away or the phone is locked, also follow [Background calls](/en/docs/guides/background-calls/).
+
+5. **Set up the LLM**
+
+   In the app on any device, open Settings → LLM, pick a provider, enter the key, click Test connection, and save. The setting syncs to the daemon and applies to the next brief. See [LLM settings](/en/docs/guides/llm/).
+
+   Voice uses the free Azure voices by default, with nothing to set up. To change it, see [Voice settings](/en/docs/guides/voice/).
+
+6. **Get your first call**
+
+   Ask Claude Code or Codex for a small task on the computer. When it finishes, your devices ring.
+
+</Steps>
+
+<Aside type="caution" title="Phone pushes with your own server">
+The Android package on the download page carries the official server's push setup. With your own server, calls arrive while the app is open. To wake a swiped-away app, you need a build with your own Firebase project; see [Development and builds](/en/docs/development/#android-package).
+</Aside>
+
+## Next
+
+<CardGrid>
+  <LinkCard title="Pair more devices" description="Another computer, phone only, or only 6 digits." href="/en/docs/guides/pairing/" />
+  <LinkCard title="Take a call" description="What you can do during a call, and where missed calls go." href="/en/docs/guides/calls/" />
+</CardGrid>

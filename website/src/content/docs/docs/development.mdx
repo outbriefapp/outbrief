@@ -1,0 +1,143 @@
+---
+title: 本地开发与打包
+description: 在本机跑起 server、daemon 和 App 做开发，以及打包 Android 安装包。
+sidebar:
+  order: 4
+---
+
+import { Aside, FileTree, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+## 目录约定
+
+三个仓库放在同一个父目录下，`pnpm dev:all` 会按这个结构去找同级的 server：
+
+<FileTree>
+
+- outbrief/
+  - outbrief-server/ Hono 服务端 + MySQL
+  - outbrief-app/ Tauri 2 + React 19 客户端
+  - outbrief-daemon/ 每台电脑上的常驻进程
+
+</FileTree>
+
+共同依赖：Node ≥ 22.18、pnpm 9。App 另外需要 Rust stable ≥ 1.85 和 [Tauri 的平台依赖](https://tauri.app/start/prerequisites/)，server 需要 Docker。
+
+## 1. 本机数据库
+
+本地数据库是一个 MySQL 8 容器，**名字必须是 `some-mysql`**，端口映射到本机 3306。`pnpm dev:all` 只按这个名字找容器，不会自动创建。
+
+<Steps>
+
+1. 第一次先创建容器。`MYSQL_ROOT_PASSWORD` 只给本机的 root 用：
+
+   ```bash
+   docker run -d --name some-mysql --restart unless-stopped \
+     -e MYSQL_ROOT_PASSWORD='local-root-password' \
+     -p 3306:3306 mysql:8.4
+   until docker exec some-mysql mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done
+   ```
+
+2. 在 outbrief-server 目录里建库和账号，只需要执行一次。提示输入口令时，填上面的 root 口令：
+
+   ```bash
+   docker exec -i some-mysql mysql -uroot -p < db/bootstrap.sql
+   ```
+
+   这一步会创建 `outbrief` 和 `outbrief_test` 两个库，以及一个只给本机用的 `outbrief` 用户。
+
+</Steps>
+
+容器已经存在时，不要再 `docker run`，停着的话用 `docker start some-mysql` 启动。
+
+## 2. 跑起来
+
+<Tabs>
+<TabItem label="一条命令（推荐）">
+
+在 outbrief-app 目录里：
+
+```bash
+pnpm install
+pnpm dev:all
+```
+
+它会依次拉起数据库容器、同级目录的 server 和桌面窗口，server 日志写在 `logs/server.log`。在托盘里点「退出」，或者按 Ctrl+C，会一起停止。
+
+- server 不在同级目录时，用 `OUTBRIEF_SERVER_DIR=<目录>` 指定。
+- 脚本会把认领码传给桌面端，让它自动创建第一个账号。本机有 daemon 时，会改成加入 daemon 的账号。
+- 启动前会先关掉还在运行的旧桌面端。
+
+</TabItem>
+<TabItem label="分别启动">
+
+```bash
+# outbrief-server
+pnpm db:migrate   # 建表（启动时也会自动执行）
+pnpm dev          # 改代码自动重启
+
+# outbrief-app
+pnpm tauri dev    # 桌面窗口 + 热更新，前端端口 :1520
+pnpm dev          # 只起前端，在浏览器里调 UI
+
+# outbrief-daemon
+node src/cli.ts login --server http://127.0.0.1:8787
+node src/cli.ts run
+```
+
+</TabItem>
+</Tabs>
+
+<Aside type="caution" title="自测不要给自己打电话">
+本机正在运行的 server 和 daemon 很可能是你自己在用的环境，往里面写的每一条汇报都会变成手机上的一通来电。测试 daemon 用 `POST /report?dryRun=1`；测试 server 用 `_test` 库的单元测试和集成测试。
+</Aside>
+
+## 常用命令
+
+三个仓库都有这几条：
+
+| 命令 | 作用 |
+|---|---|
+| `pnpm lint` / `pnpm format` | Biome 检查 / 自动修复 |
+| `pnpm typecheck` | TypeScript 类型检查 |
+| `pnpm test` | Vitest。server 的测试会清空 `OUTBRIEF_TEST_DATABASE_URL` 指向的库，库名必须以 `_test` 结尾 |
+
+App 另外还有：
+
+| 命令 | 作用 |
+|---|---|
+| `pnpm build` | 构建前端到 `dist/` |
+| `pnpm tauri build` | 打包桌面安装包 |
+| `pnpm tauri android init` / `ios init` | 生成本地的 Android / iOS 工程 |
+| `scripts/build-android.sh` | 打包可安装的 Android APK |
+
+数据库表结构只在 server 的 `db/migrations/NNN_*.sql` 里定义。要新增表或字段，就新建一个迁移文件，不要修改已经执行过的文件。
+
+## Android 安装包
+
+`scripts/build-android.sh` 会打出一个签名的 arm64 release APK，产物在 `dist-android/OutBrief.apk`，可以直接装到手机上。
+
+<Steps>
+
+1. 装好工具链：rustup（`rustup target add aarch64-linux-android`，Homebrew 版的 rust 没有 Android 目标）、JDK 17、Android SDK（`platforms;android-36`、`build-tools`）和 NDK，并设置好 `ANDROID_HOME`、`NDK_HOME`、`JAVA_HOME`。
+
+2. （要来电推送的话）准备 Firebase 配置：在 Firebase 控制台给 `ai.outbrief.app` 添加 Android 应用，把下载的 `google-services.json` 放到 `~/.outbrief-android/firebase/`，或者用 `OUTBRIEF_FIREBASE_CONFIG=<路径>` 指定。
+
+3. 打包。服务地址默认是 `https://api.outbriefapp.com`，用 `VITE_OUTBRIEF_SERVER_URL` 换成你自己的：
+
+   ```bash
+   VITE_OUTBRIEF_SERVER_URL=https://your-server.example scripts/build-android.sh
+   ```
+
+</Steps>
+
+<Aside type="note">
+- 签名密钥会在第一次打包时生成到 `~/.outbrief-android/`，之后一直用它签名，新包才能覆盖安装旧包。这个目录不在仓库里。
+- 安装包和 server 必须用**同一个 Firebase 项目**，否则手机登记了推送令牌也收不到推送。
+- 直接跑 `pnpm tauri android dev` / `build` 时，要自己先 `export OUTBRIEF_FIREBASE_CONFIG`，否则包里没有推送。
+</Aside>
+
+## 图标
+
+中文名「启奏」：朱红底上一本展开的金边奏折，折页上的竖行字画成了声波，寓意 Agent 上奏、用语音汇报。
+
+源文件是 outbrief-app 的 `app-icon.svg`。改完后导出 1024×1024 的 `app-icon.png`，再运行 `pnpm tauri icon app-icon.json` 重新生成所有尺寸。Android 自适应图标分成两层：`app-icon-android-bg.svg` 和 `app-icon-android-fg.svg`，改了主图的配色或图形，这两个文件也要同步改。

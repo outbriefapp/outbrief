@@ -23,12 +23,35 @@ export default defineConfig({
         {
           label: "开始",
           translations: { en: "Start" },
-          items: ["download", "changelog", "docs/quick-start"],
+          items: ["docs/overview", "docs/quick-start", "download", "changelog"],
         },
         {
-          label: "文档",
-          translations: { en: "Docs" },
-          items: ["docs/app", "docs/daemon", "docs/server"],
+          label: "使用指南",
+          translations: { en: "Guides" },
+          items: [
+            "docs/guides/pairing",
+            "docs/guides/calls",
+            "docs/guides/multica",
+            "docs/guides/background-calls",
+            "docs/guides/llm",
+            "docs/guides/voice",
+            "docs/guides/privacy",
+          ],
+        },
+        {
+          label: "安装与部署",
+          translations: { en: "Install & deploy" },
+          items: ["docs/app", "docs/daemon", "docs/server", "docs/development"],
+        },
+        {
+          label: "参考",
+          translations: { en: "Reference" },
+          collapsed: true,
+          items: [
+            "docs/reference/server-api",
+            "docs/reference/daemon-api",
+            "docs/reference/app-source",
+          ],
         },
         {
           label: "架构决策（ADR）",

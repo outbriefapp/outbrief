@@ -1,0 +1,116 @@
+---
+title: 自部署 Server
+description: 用 Node + MySQL 部署 outbrief-server，或者部署到 Railway。
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+outbrief-server 只做一件事：在你的电脑和设备之间**转发密文**。它没有密钥，看不到汇报、简报和回复；来电结束后会删除密文；它也不调用任何大模型。
+
+<Aside type="caution" title="只能跑一个实例">
+在线状态、实时推送、设置转发和限流都放在进程内存里，所以副本数固定为 1，不要开自动扩容。
+
+发布新版本时要**先停旧进程，再起新进程**（Kubernetes 用 `strategy: Recreate`），不要用滚动更新或蓝绿部署，否则新旧版本同时在线时会漏掉来电。原因见 [ADR 0009](/docs/adr/0009-single-instance-first/)。
+</Aside>
+
+## 部署
+
+<Tabs>
+<TabItem label="直接运行">
+
+需要 Node ≥ 22.18、pnpm 9 和 MySQL 8。
+
+<Steps>
+
+1. 下载代码，安装依赖：
+
+   ```bash
+   git clone https://github.com/outbriefapp/outbrief-server
+   cd outbrief-server
+   pnpm install
+   ```
+
+2. 启动。连接串由部署环境注入，下面的用户名和口令只是占位符：
+
+   ```bash
+   OUTBRIEF_DATABASE_URL='mysql://USER:PASSWORD@HOST:3306/outbrief' PORT=8787 pnpm start
+   ```
+
+   数据表会在启动时自动创建和迁移。
+
+3. 在日志里找到认领码，记下来：
+
+   ```text
+   Claim code: XXXX-XXXX-XXXX
+   ```
+
+4. 检查是否正常：`GET /healthz`
+
+</Steps>
+
+</TabItem>
+<TabItem label="Railway">
+
+仓库里的 `railway.json` 已经配好了健康检查和重启策略，其余的在 Railway 上设置：
+
+<Steps>
+
+1. 添加一个 MySQL 8 服务（镜像 `mysql:8.4`，卷挂在 `/var/lib/mysql`）。只走私网，不要开公网 TCP Proxy。
+2. 给 server 设置变量：
+   - `OUTBRIEF_DATABASE_URL` 引用 MySQL 服务的 `${{MySQL.MYSQL_URL}}`，不要把连接串明文写进仓库
+   - `PORT=8787`
+   - 要来电推送的话，再设置 `OUTBRIEF_FCM_SERVICE_ACCOUNT`（见下文）
+3. 副本数设为 1，并给 server 挂一个卷（比如 `/data`，代码不会读写它）。Railway 不允许两个部署同时挂着同一个卷，所以发布时会先停旧部署、再起新的，正好满足单实例的要求。
+4. 绑定自定义域名：按 Railway 给的 CNAME 和 `_railway-verify` TXT 记录添加 DNS。用 Cloudflare 时，先设成「仅 DNS」（灰色云朵），让 Railway 签发证书。
+
+</Steps>
+
+</TabItem>
+</Tabs>
+
+<Aside type="tip">
+MySQL 记得做备份。
+</Aside>
+
+## 谁能创建账号
+
+| 部署方式 | 设置 | 行为 |
+|---|---|---|
+| 私有化（默认） | `OUTBRIEF_OPEN_SIGNUP=false` | 第一台设备要填日志里的认领码，创建完账号后就关闭注册，其他设备只能用配对码加入 |
+| 公共云端 | `OUTBRIEF_OPEN_SIGNUP=true` | 谁都能建账号，不用认领码，有限流 |
+
+## 环境变量
+
+都不是必填，不需要 `.env` 文件。
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `OUTBRIEF_DATABASE_URL` | 本机 docker 的 `outbrief` 库 | MySQL 连接串，由部署平台注入 |
+| `PORT` | `8787` | 监听端口 |
+| `OUTBRIEF_OPEN_SIGNUP` | `false` | 是否开放注册，见上表 |
+| `OUTBRIEF_FCM_SERVICE_ACCOUNT` | 不设 | 来电推送用的 Firebase 服务账号密钥，可以是整个 JSON 内容，也可以是文件路径。设了但读不出来时，server 会启动失败 |
+
+<Aside type="danger">
+数据库连接串和 Firebase 密钥都不要放进仓库。
+</Aside>
+
+## 来电推送（可选）
+
+不配推送也能用：App 开着时会通过事件流收到来电。想让 App 被划掉的 Android 手机也能响铃，就需要推送：
+
+<Steps>
+
+1. 在 Firebase 控制台建一个项目，添加包名为 `ai.outbrief.app` 的 Android 应用。
+2. 把这个项目的服务账号密钥（整个 JSON）配给 server 的 `OUTBRIEF_FCM_SERVICE_ACCOUNT`。
+3. 用同一个项目的 `google-services.json` 打包 Android App，见 [Android 安装包](/docs/development/#android-安装包)。
+
+</Steps>
+
+推送里不带任何内容，只有来电 id。手机收到后，再用自己的令牌去取密文，在本机解密、响铃。没收到回执时，每 10 秒重推一次，最多 3 次。设计见 [ADR 0010](/docs/adr/0010-wake-phones-with-push/)。
+
+## 下一步
+
+- 本地跑起来开发调试：[本地开发与打包](/docs/development/)
+- 所有接口：[Server 接口](/docs/reference/server-api/)

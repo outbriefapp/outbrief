@@ -16,8 +16,8 @@ import { LinkButton } from "@astrojs/starlight/components";
 | 平台 | 安装包 | 说明 |
 |---|---|---|
 | macOS（Apple Silicon） | `OutBrief_<版本>_aarch64.dmg` | Ad-hoc 签名，未做 Developer ID 公证。从浏览器下载后若被拦截，在 Finder 里对 App 右键 → 打开，或执行 `xattr -cr /Applications/OutBrief.app` |
-| Android（arm64） | `OutBrief_<版本>_arm64.apk` | 包名 `ai.outbrief.app`，可直接安装，带来电推送。装好后按 [App 文档](/docs/app/#手机在后台或锁屏时响铃)打开后台来电 |
-| iOS、Windows、Linux | 暂无安装包 | 从源码打包，见 [App 文档](/docs/app/#安装本仓库) |
+| Android（arm64） | `OutBrief_<版本>_arm64.apk` | 包名 `ai.outbrief.app`，可直接安装，带来电推送。装好后按 [手机后台响铃](/docs/guides/background-calls/) 打开后台来电 |
+| iOS、Windows、Linux | 暂无安装包 | 从源码打包，见 [安装 App](/docs/app/) |
 
 只装 App 还不能接到来电：跑 Agent 的电脑上还要装 daemon，并和 App 配对到同一个账号。完整步骤见 [快速开始](/docs/quick-start/)。
 

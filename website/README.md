@@ -20,8 +20,10 @@ pnpm preview    # 预览 dist/，搜索只在 build 之后可用
 | 路径 | 内容 |
 |---|---|
 | `src/content/docs/` | 中文页面（默认语言，挂在根路径） |
-| `src/content/docs/en/` | 英文页面，挂在 `/en/`。缺英文版的页面（ADR）回退显示中文 |
-| `src/content/docs/docs/` | 文档：快速开始、App、Daemon、Server 自部署、ADR |
+| `src/content/docs/en/` | 英文页面，挂在 `/en/`。缺英文版的页面（参考、ADR）回退显示中文 |
+| `src/content/docs/docs/` | 文档：工作原理、快速开始；`guides/` 使用指南；安装与部署；`reference/` 接口和源码参考；`adr/` |
+| `src/components/Architecture.astro` | 文档里的三段式架构图 |
+| `src/components/Screen.astro` | 文档配图（带说明文字），图片在 `src/assets/screens/`，截自首页宣传视频 |
 | `src/components/PromoVideo.astro` | 首页宣传视频 |
 | `public/media/` | 宣传视频和封面图（单个文件不能超过 Cloudflare Pages 的 25 MiB 上限） |
 | `public/proposal.html` | 最初的方案汇报 |
