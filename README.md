@@ -6,6 +6,8 @@ OutBrief 客户端（Tauri 2 + React 19 + TypeScript，桌面 / 移动）：AI A
 
 使用文档、安装步骤和架构决策都在官网：**<https://outbriefapp.com>**
 
+问题、反馈和建议，欢迎来 [Discord](https://discord.gg/TG8qHzdv6) 交流。
+
 - [下载安装包](https://outbriefapp.com/download/)
 - [App 文档（安装、配对、通话、语音和大模型设置、本地开发）](https://outbriefapp.com/docs/app/)
 - [快速开始（安装顺序与设备配对）](https://outbriefapp.com/docs/quick-start/)
