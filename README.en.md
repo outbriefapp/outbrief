@@ -6,6 +6,8 @@ OutBrief client (Tauri 2 + React 19 + TypeScript, desktop and mobile). When an A
 
 Docs, install steps, and design decisions are on the website: **<https://outbriefapp.com/en/>**
 
+Questions, feedback, and ideas: join us on [Discord](https://discord.gg/TG8qHzdv6).
+
 - [Download](https://outbriefapp.com/en/download/)
 - [App docs (install, pairing, calls, voice and LLM settings, local development)](https://outbriefapp.com/en/docs/app/)
 - [Quick start (install order and pairing)](https://outbriefapp.com/en/docs/quick-start/)
