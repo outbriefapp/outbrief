@@ -27,8 +27,8 @@ outbrief-server 只做一件事：在你的电脑和设备之间**转发密文**
 1. 下载代码，安装依赖：
 
    ```bash
-   git clone https://github.com/outbriefapp/outbrief-server
-   cd outbrief-server
+   git clone https://github.com/outbriefapp/outbrief
+   cd outbrief/server
    pnpm install
    ```
 
@@ -53,17 +53,18 @@ outbrief-server 只做一件事：在你的电脑和设备之间**转发密文**
 </TabItem>
 <TabItem label="Railway">
 
-仓库里的 `railway.json` 已经配好了健康检查和重启策略，其余的在 Railway 上设置：
+`server/railway.json` 已经配好了健康检查和重启策略，其余的在 Railway 上设置：
 
 <Steps>
 
-1. 添加一个 MySQL 8 服务（镜像 `mysql:8.4`，卷挂在 `/var/lib/mysql`）。只走私网，不要开公网 TCP Proxy。
-2. 给 server 设置变量：
+1. 服务的来源选仓库 `outbriefapp/outbrief`（或你的 fork），Root Directory 设为 `/server`，配置文件路径设为 `/server/railway.json`（Railway 不会到 Root Directory 里找这个文件），Watch Paths 设为 `/server/**`。
+2. 添加一个 MySQL 8 服务（镜像 `mysql:8.4`，卷挂在 `/var/lib/mysql`）。只走私网，不要开公网 TCP Proxy。
+3. 给 server 设置变量：
    - `OUTBRIEF_DATABASE_URL` 引用 MySQL 服务的 `${{MySQL.MYSQL_URL}}`，不要把连接串明文写进仓库
    - `PORT=8787`
    - 要来电推送的话，再设置 `OUTBRIEF_FCM_SERVICE_ACCOUNT`（见下文）
-3. 副本数设为 1，并给 server 挂一个卷（比如 `/data`，代码不会读写它）。Railway 不允许两个部署同时挂着同一个卷，所以发布时会先停旧部署、再起新的，正好满足单实例的要求。
-4. 绑定自定义域名：按 Railway 给的 CNAME 和 `_railway-verify` TXT 记录添加 DNS。用 Cloudflare 时，先设成「仅 DNS」（灰色云朵），让 Railway 签发证书。
+4. 副本数设为 1，并给 server 挂一个卷（比如 `/data`，代码不会读写它）。Railway 不允许两个部署同时挂着同一个卷，所以发布时会先停旧部署、再起新的，正好满足单实例的要求。
+5. 绑定自定义域名：按 Railway 给的 CNAME 和 `_railway-verify` TXT 记录添加 DNS。用 Cloudflare 时，先设成「仅 DNS」（灰色云朵），让 Railway 签发证书。
 
 </Steps>
 

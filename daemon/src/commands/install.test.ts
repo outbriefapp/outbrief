@@ -13,6 +13,7 @@ describe("withoutOutbriefHooks", () => {
         },
         { hooks: [hook('"/n/node" "/b/outbrief-daemon/src/cli.ts" hook codex'), hook("other")] },
         { hooks: [hook("node ~/work/outbrief-hook/src/cli.ts claude-code")] },
+        { hooks: [hook('"/n/node" "/c/outbrief/daemon/src/cli.ts" hook claude-code')] },
       ]),
     ).toEqual([{ matcher: "", hooks: [hook("afplay done.mp3")] }, { hooks: [hook("other")] }]);
   });

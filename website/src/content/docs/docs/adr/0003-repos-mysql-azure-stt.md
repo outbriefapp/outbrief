@@ -7,6 +7,7 @@ sidebar:
 - 状态：已采纳（2026-09-25）
 - 决策者：zhibo li
 - 后续：`outbrief-hook` 已于 2026-09-28（YOUT-200）并入 `outbrief-daemon`（`outbrief-daemon hook` 子命令），仓库删除；两者本来就装在同一台 Agent 电脑上，hook 离开 daemon 也没法单独工作。
+- 取代：第 1 条（三个独立仓库）已于 2026-10-12 被 [ADR 0011](/docs/adr/0011-single-repo/) 取代，所有代码合并进 `outbriefapp/outbrief`。
 - 修订：ADR 0001 第 2、3、6 条（共享 `@outbrief/protocol`、SQLite、pnpm workspace）；ADR 0002 第 2、3 条（`packages/voice`、本地 SenseVoice 优先）
 
 ## 决策

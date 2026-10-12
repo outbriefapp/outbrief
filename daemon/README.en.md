@@ -13,4 +13,4 @@ Questions, feedback, and ideas: join us on [Discord](https://discord.gg/TG8qHzdv
 
 ## License
 
-[OutBrief License](LICENSE) (Apache License 2.0 plus extra terms, following the [Multica License](https://github.com/multica-ai/multica/blob/main/LICENSE)).
+[OutBrief License](../LICENSE) (Apache License 2.0 plus extra terms, following the [Multica License](https://github.com/multica-ai/multica/blob/main/LICENSE)).

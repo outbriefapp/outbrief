@@ -3,7 +3,7 @@ title: 更新日志
 description: OutBrief 各版本的变化。
 ---
 
-版本号跟随 `outbrief-app` 的 [GitHub Releases](https://github.com/outbriefapp/outbrief-app/releases)。
+版本号跟随 App 的 [GitHub Releases](https://github.com/outbriefapp/outbrief/releases)。
 
 ## 0.0.1 · 2026-10-12
 

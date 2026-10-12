@@ -14,4 +14,4 @@ OutBrief 服务端：只做中转。接收 outbrief-daemon 加密好的汇报，
 
 ## License
 
-[OutBrief License](LICENSE)（基于 Apache License 2.0 并附加条件，参照 [Multica License](https://github.com/multica-ai/multica/blob/main/LICENSE)）。
+[OutBrief License](../LICENSE)（基于 Apache License 2.0 并附加条件，参照 [Multica License](https://github.com/multica-ai/multica/blob/main/LICENSE)）。

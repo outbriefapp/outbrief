@@ -3,7 +3,7 @@ title: Changelog
 description: What changed in each OutBrief release.
 ---
 
-Versions follow the [GitHub Releases](https://github.com/outbriefapp/outbrief-app/releases) of `outbrief-app`.
+Versions follow the [GitHub Releases](https://github.com/outbriefapp/outbrief/releases) of the app.
 
 ## 0.0.1 · 2026-10-12
 

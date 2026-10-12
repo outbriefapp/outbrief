@@ -27,8 +27,8 @@ You need Node ≥ 22.18, pnpm 9, and MySQL 8.
 1. Get the code and install dependencies:
 
    ```bash
-   git clone https://github.com/outbriefapp/outbrief-server
-   cd outbrief-server
+   git clone https://github.com/outbriefapp/outbrief
+   cd outbrief/server
    pnpm install
    ```
 
@@ -53,17 +53,18 @@ You need Node ≥ 22.18, pnpm 9, and MySQL 8.
 </TabItem>
 <TabItem label="Railway">
 
-The repo's `railway.json` sets the health check and restart policy. Set the rest in Railway:
+`server/railway.json` sets the health check and restart policy. Set the rest in Railway:
 
 <Steps>
 
-1. Add a MySQL 8 service (image `mysql:8.4`, volume on `/var/lib/mysql`). Private network only; no public TCP proxy.
-2. Set the server's variables:
+1. Use the repo `outbriefapp/outbrief` (or your fork) as the service source. Set Root Directory to `/server`, the config file path to `/server/railway.json` (Railway does not look for it inside the Root Directory), and Watch Paths to `/server/**`.
+2. Add a MySQL 8 service (image `mysql:8.4`, volume on `/var/lib/mysql`). Private network only; no public TCP proxy.
+3. Set the server's variables:
    - `OUTBRIEF_DATABASE_URL` referencing `${{MySQL.MYSQL_URL}}`. Never write the connection string into the repo
    - `PORT=8787`
    - `OUTBRIEF_FCM_SERVICE_ACCOUNT` for call pushes (see below)
-3. Set replicas to 1 and attach a volume to the server (for example `/data`; the code never touches it). Railway does not let two deployments hold the same volume, so a release stops the old one before starting the new one, which is exactly the single-instance rule.
-4. For a custom domain, add the CNAME and `_railway-verify` TXT records Railway gives you. On Cloudflare, keep it DNS only (gray cloud) so Railway can issue the certificate.
+4. Set replicas to 1 and attach a volume to the server (for example `/data`; the code never touches it). Railway does not let two deployments hold the same volume, so a release stops the old one before starting the new one, which is exactly the single-instance rule.
+5. For a custom domain, add the CNAME and `_railway-verify` TXT records Railway gives you. On Cloudflare, keep it DNS only (gray cloud) so Railway can issue the certificate.
 
 </Steps>
 

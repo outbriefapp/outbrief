@@ -9,14 +9,19 @@ import { Aside, FileTree, Steps, Tabs, TabItem } from "@astrojs/starlight/compon
 
 ## Folder layout
 
-Keep the three repos side by side. `pnpm dev:all` looks for the server next to the app:
+All the code lives in one repo, [outbriefapp/outbrief](https://github.com/outbriefapp/outbrief). `pnpm dev:all` looks for `server/` next to `app/`:
+
+```bash
+git clone https://github.com/outbriefapp/outbrief
+```
 
 <FileTree>
 
 - outbrief/
-  - outbrief-server/ Hono server + MySQL
-  - outbrief-app/ Tauri 2 + React 19 client
-  - outbrief-daemon/ resident process on each computer
+  - app/ Tauri 2 + React 19 client
+  - server/ Hono server + MySQL
+  - daemon/ resident process on each computer
+  - website/ this website and docs
 
 </FileTree>
 
@@ -37,7 +42,7 @@ The local database is a MySQL 8 container that **must be named `some-mysql`**, p
    until docker exec some-mysql mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done
    ```
 
-2. In outbrief-server, create the databases and user once. At the password prompt, type the root password above:
+2. In `server/`, create the databases and user once. At the password prompt, type the root password above:
 
    ```bash
    docker exec -i some-mysql mysql -uroot -p < db/bootstrap.sql
@@ -54,7 +59,7 @@ If the container already exists, don't `docker run` again. Start a stopped one w
 <Tabs>
 <TabItem label="One command (recommended)">
 
-In outbrief-app:
+In `app/`:
 
 ```bash
 pnpm install
@@ -71,15 +76,15 @@ It brings up the database container, the server next door, and the desktop windo
 <TabItem label="Separately">
 
 ```bash
-# outbrief-server
+# server/
 pnpm db:migrate   # create tables (startup does this too)
 pnpm dev          # restarts on change
 
-# outbrief-app
+# app/
 pnpm tauri dev    # desktop window + hot reload, frontend on :1520
 pnpm dev          # frontend only, in a browser
 
-# outbrief-daemon
+# daemon/
 node src/cli.ts login --server http://127.0.0.1:8787
 node src/cli.ts run
 ```
@@ -93,7 +98,7 @@ The server and daemon running on your machine are likely the ones you actually u
 
 ## Commands
 
-In all three repos:
+In `app/`, `server/` and `daemon/`:
 
 | Command | What it does |
 |---|---|
@@ -140,4 +145,4 @@ The schema lives only in the server's `db/migrations/NNN_*.sql`. Add a new migra
 
 The Chinese name is 启奏 ("presenting a memorial to the throne"): a gold-edged memorial book unfolded on vermilion, with its vertical lines drawn as sound waves. The agent reports, by voice.
 
-The source is `app-icon.svg` in outbrief-app. After editing it, export a 1024×1024 `app-icon.png` and run `pnpm tauri icon app-icon.json` to regenerate every size. The Android adaptive icon has two layers, `app-icon-android-bg.svg` and `app-icon-android-fg.svg`; update both when the colors or shapes of the main icon change.
+The source is `app/app-icon.svg`. After editing it, export a 1024×1024 `app-icon.png` and run `pnpm tauri icon app-icon.json` to regenerate every size. The Android adaptive icon has two layers, `app-icon-android-bg.svg` and `app-icon-android-fg.svg`; update both when the colors or shapes of the main icon change.

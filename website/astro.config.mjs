@@ -16,10 +16,10 @@ export default defineConfig({
         en: { label: "English", lang: "en" },
       },
       social: [
-        { icon: "github", label: "GitHub", href: "https://github.com/outbriefapp" },
+        { icon: "github", label: "GitHub", href: "https://github.com/outbriefapp/outbrief" },
         { icon: "discord", label: "Discord", href: "https://discord.gg/TG8qHzdv6" },
       ],
-      editLink: { baseUrl: "https://github.com/outbriefapp/outbrief-website/edit/main/" },
+      editLink: { baseUrl: "https://github.com/outbriefapp/outbrief/edit/main/website/" },
       lastUpdated: true,
       customCss: ["./src/styles/custom.css"],
       sidebar: [

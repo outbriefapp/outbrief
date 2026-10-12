@@ -9,14 +9,19 @@ import { Aside, FileTree, Steps, Tabs, TabItem } from "@astrojs/starlight/compon
 
 ## 目录约定
 
-三个仓库放在同一个父目录下，`pnpm dev:all` 会按这个结构去找同级的 server：
+所有代码都在一个仓库 [outbriefapp/outbrief](https://github.com/outbriefapp/outbrief) 里，`pnpm dev:all` 会去找同级的 `server/`：
+
+```bash
+git clone https://github.com/outbriefapp/outbrief
+```
 
 <FileTree>
 
 - outbrief/
-  - outbrief-server/ Hono 服务端 + MySQL
-  - outbrief-app/ Tauri 2 + React 19 客户端
-  - outbrief-daemon/ 每台电脑上的常驻进程
+  - app/ Tauri 2 + React 19 客户端
+  - server/ Hono 服务端 + MySQL
+  - daemon/ 每台电脑上的常驻进程
+  - website/ 官网和文档站（就是这个网站）
 
 </FileTree>
 
@@ -37,7 +42,7 @@ import { Aside, FileTree, Steps, Tabs, TabItem } from "@astrojs/starlight/compon
    until docker exec some-mysql mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done
    ```
 
-2. 在 outbrief-server 目录里建库和账号，只需要执行一次。提示输入口令时，填上面的 root 口令：
+2. 在 `server/` 目录里建库和账号，只需要执行一次。提示输入口令时，填上面的 root 口令：
 
    ```bash
    docker exec -i some-mysql mysql -uroot -p < db/bootstrap.sql
@@ -54,7 +59,7 @@ import { Aside, FileTree, Steps, Tabs, TabItem } from "@astrojs/starlight/compon
 <Tabs>
 <TabItem label="一条命令（推荐）">
 
-在 outbrief-app 目录里：
+在 `app/` 目录里：
 
 ```bash
 pnpm install
@@ -71,15 +76,15 @@ pnpm dev:all
 <TabItem label="分别启动">
 
 ```bash
-# outbrief-server
+# server/
 pnpm db:migrate   # 建表（启动时也会自动执行）
 pnpm dev          # 改代码自动重启
 
-# outbrief-app
+# app/
 pnpm tauri dev    # 桌面窗口 + 热更新，前端端口 :1520
 pnpm dev          # 只起前端，在浏览器里调 UI
 
-# outbrief-daemon
+# daemon/
 node src/cli.ts login --server http://127.0.0.1:8787
 node src/cli.ts run
 ```
@@ -93,7 +98,7 @@ node src/cli.ts run
 
 ## 常用命令
 
-三个仓库都有这几条：
+`app/`、`server/`、`daemon/` 都有这几条：
 
 | 命令 | 作用 |
 |---|---|
@@ -140,4 +145,4 @@ App 另外还有：
 
 中文名「启奏」：朱红底上一本展开的金边奏折，折页上的竖行字画成了声波，寓意 Agent 上奏、用语音汇报。
 
-源文件是 outbrief-app 的 `app-icon.svg`。改完后导出 1024×1024 的 `app-icon.png`，再运行 `pnpm tauri icon app-icon.json` 重新生成所有尺寸。Android 自适应图标分成两层：`app-icon-android-bg.svg` 和 `app-icon-android-fg.svg`，改了主图的配色或图形，这两个文件也要同步改。
+源文件是 `app/app-icon.svg`。改完后导出 1024×1024 的 `app-icon.png`，再运行 `pnpm tauri icon app-icon.json` 重新生成所有尺寸。Android 自适应图标分成两层：`app-icon-android-bg.svg` 和 `app-icon-android-fg.svg`，改了主图的配色或图形，这两个文件也要同步改。

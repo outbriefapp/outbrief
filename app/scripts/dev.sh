@@ -3,8 +3,7 @@
 #
 #   scripts/dev.sh
 #
-# 服务端目录默认是同级目录，目录名里的 app 换成 server（outbrief-app → outbrief-server，
-# app-p1 → server-p1）；也可以用 OUTBRIEF_SERVER_DIR=<目录> 指定。
+# 服务端目录默认是 monorepo 里的同级目录 server/；也可以用 OUTBRIEF_SERVER_DIR=<目录> 指定。
 # 端口被占用时，先结束占用进程再启动。服务端日志写到 logs/server.log。
 # 托盘里点「退出」、按 Ctrl+C 或直接关掉终端，本脚本启动的服务端都会一起停止（关窗口只是收到托盘）。
 set -euo pipefail
@@ -115,7 +114,7 @@ for cmd in lsof curl docker pnpm node cargo; do
     command -v "$cmd" >/dev/null 2>&1 || die "找不到命令：${cmd}"
 done
 
-SERVER_DIR=${OUTBRIEF_SERVER_DIR:-$(dirname "$ROOT")/$(basename "$ROOT" | sed 's/app/server/')}
+SERVER_DIR=${OUTBRIEF_SERVER_DIR:-$(dirname "$ROOT")/server}
 grep -qs '"name": "outbrief-server"' "$SERVER_DIR/package.json" ||
     die "找不到 outbrief-server（${SERVER_DIR}）。用 OUTBRIEF_SERVER_DIR=<服务端目录> 指定"
 SERVER_DIR=$(cd "$SERVER_DIR" && pwd)

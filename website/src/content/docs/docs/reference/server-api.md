@@ -4,7 +4,7 @@ description: "outbrief-server 的 HTTP 接口、鉴权和数据保留规则。"
 ---
 
 :::note
-这一页给开发者看。请求和响应的结构以 [`src/protocol.ts`](https://github.com/outbriefapp/outbrief-server/blob/main/src/protocol.ts) 为准，`outbrief-app` 和 `outbrief-daemon` 里各有一份镜像类型，改接口时要一起改。
+这一页给开发者看。请求和响应的结构以 [`src/protocol.ts`](https://github.com/outbriefapp/outbrief/blob/main/server/src/protocol.ts) 为准，`outbrief-app` 和 `outbrief-daemon` 里各有一份镜像类型，改接口时要一起改。
 :::
 
 除了公开接口，其他请求都要带设备令牌 `Authorization: Bearer <令牌>`（App 是 `oba_…`，daemon 是 `obm_…`）。
@@ -59,7 +59,7 @@ description: "outbrief-server 的 HTTP 接口、鉴权和数据保留规则。"
 - 谁先装谁建账号，其他设备用 6 位配对码（10 分钟、一次性）加入。二维码 / 配对链接 `outbrief://pair?server=…&code=…&key=obk1_…` 同时带上端到端密钥，由设备直接传给设备，server 看不到。输错配对码、认领码会被限流。
 - 谁能建账号取决于部署：公共云端设 `OUTBRIEF_OPEN_SIGNUP=true`，开放注册、限流；私有化部署默认关闭：还没有账号时 server 每次启动在日志里打印一次性**认领码**，第一个账号要填它，之后不再允许建新账号。原因见 ADR 0008。
 
-服务端不保存、也不使用任何 Multica 令牌：Multica 令牌只存在用户电脑上的 outbrief-daemon 里，由它监听任务、上报汇报、发回复。请求 / 响应结构以 [`src/protocol.ts`](https://github.com/outbriefapp/outbrief-server/blob/main/src/protocol.ts) 为准；`outbrief-app` 与 `outbrief-daemon` 各有一份镜像类型，改接口时一起改。
+服务端不保存、也不使用任何 Multica 令牌：Multica 令牌只存在用户电脑上的 outbrief-daemon 里，由它监听任务、上报汇报、发回复。请求 / 响应结构以 [`src/protocol.ts`](https://github.com/outbriefapp/outbrief/blob/main/server/src/protocol.ts) 为准；`outbrief-app` 与 `outbrief-daemon` 各有一份镜像类型，改接口时一起改。
 
 简报（`Brief`）由 outbrief-daemon 用本机配置的大模型生成，和汇报一起加密后提交。`protocol.ts` 里的 `SealedReport` / `SealedReply` / `Brief` 定义的是密文里面的内容，是 daemon 和客户端之间的约定，服务端既看不到也不校验。
 

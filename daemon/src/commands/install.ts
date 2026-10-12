@@ -41,9 +41,12 @@ interface StopHookEntry {
   hooks?: Array<{ type?: string; command?: string }>;
 }
 
-/** An OutBrief Stop hook from any checkout, including the retired outbrief-hook repo. */
+/**
+ * An OutBrief Stop hook from any checkout: the monorepo's `daemon/`, the old outbrief-daemon
+ * repo, or the retired outbrief-hook repo.
+ */
 function isOutbriefHook(command: string | undefined): boolean {
-  return /outbrief-(daemon|hook)\/src\/cli\.ts"?\s+(hook\s+)?(claude-code|codex)\b/.test(
+  return /(\/daemon|outbrief-(daemon|hook))\/src\/cli\.ts"?\s+(hook\s+)?(claude-code|codex)\b/.test(
     command ?? "",
   );
 }
