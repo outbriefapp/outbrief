@@ -1,0 +1,12 @@
+/* 品牌色取自 App 图标的红色渐变。 */
+:root {
+  --sl-color-accent-low: #3a0d0f;
+  --sl-color-accent: #d93a2b;
+  --sl-color-accent-high: #ffc9c2;
+}
+
+:root[data-theme="light"] {
+  --sl-color-accent-low: #fde3df;
+  --sl-color-accent: #b5261c;
+  --sl-color-accent-high: #5c0f12;
+}

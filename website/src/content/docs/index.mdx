@@ -1,0 +1,39 @@
+---
+title: OutBrief：Agent 干完活，给你打电话
+description: OutBrief 把 AI Agent 的工作汇报变成一通视频来电：接起来听语音简报、看卡片，挂断时直接回复原会话。
+template: splash
+hero:
+  title: Agent 干完活，会给你打电话
+  tagline: OutBrief 把 AI Agent 的工作汇报变成一通视频来电。接起来，听语音简报、看汇报卡片；随时打字打断；挂断时说一句，回复就回到原来的会话。
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: 下载
+      link: /download/
+      icon: right-arrow
+    - text: 快速开始
+      link: /docs/quick-start/
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+import PromoVideo from "../../components/PromoVideo.astro";
+
+<PromoVideo label="OutBrief 宣传视频" />
+
+## 工作方式
+
+<CardGrid stagger>
+  <Card title="完成即来电" icon="rocket">
+    Claude Code、Codex 跑完任务，或者 Multica 上的 Agent 发出汇报，你的手机和电脑会像微信视频来电一样响铃。多台设备同时响，一台接起，其他的马上停。
+  </Card>
+  <Card title="语音 + 卡片播报" icon="open-book">
+    接听后，Agent 用语音把这次做了什么、结果怎样讲给你听，关键信息同步显示成卡片。简报由你电脑上的 daemon 用你自己的大模型生成。
+  </Card>
+  <Card title="挂断即回复" icon="comment">
+    通话中随时打字追问；挂断时留一句话，daemon 就在原会话里接着跑 Agent，或者以你的身份回到 Multica 的评论里。
+  </Card>
+  <Card title="端到端加密，没有登录" icon="approve-check">
+    服务端只转发密文，读不到汇报、简报和回复，来电结束就删掉。账号是匿名的，设备之间扫码配对。也可以自己部署 server。
+  </Card>
+</CardGrid>

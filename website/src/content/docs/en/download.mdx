@@ -1,0 +1,26 @@
+---
+title: Download
+description: Download OutBrief for desktop and phone.
+---
+
+import { LinkButton } from "@astrojs/starlight/components";
+
+Installers are published on the GitHub Releases page of `outbrief-app`. Every release lists the SHA-256 of each file.
+
+<LinkButton href="https://github.com/outbriefapp/outbrief-app/releases/latest" icon="external">
+  Get the latest release on GitHub
+</LinkButton>
+
+## Platforms
+
+| Platform | File | Notes |
+|---|---|---|
+| macOS (Apple Silicon) | `OutBrief_<version>_aarch64.dmg` | Ad-hoc signed, not notarized with a Developer ID. If the browser download is blocked, right-click the app in Finder → Open, or run `xattr -cr /Applications/OutBrief.app` |
+| Android (arm64) | `OutBrief_<version>_arm64.apk` | Package `ai.outbrief.app`. Installs directly and includes call pushes. After install, turn on background calls as described in [App](/en/docs/app/#calls-while-the-phone-app-is-in-the-background) |
+| iOS, Windows, Linux | No installer yet | Build from source, see [App](/en/docs/app/#install-this-repo) |
+
+The app alone does not get calls. The computer that runs the agents also needs the daemon, paired into the same account. See [Quick start](/en/docs/quick-start/).
+
+## Older releases
+
+Every release is on the [Releases page](https://github.com/outbriefapp/outbrief-app/releases). What changed in each one is in the [changelog](/en/changelog/).

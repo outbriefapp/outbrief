@@ -1,0 +1,39 @@
+---
+title: "OutBrief: when the work is done, it calls"
+description: OutBrief turns an AI agent's report into a video call. Pick up to hear a spoken brief with cards, and reply to the same session when you hang up.
+template: splash
+hero:
+  title: When the work is done, it calls
+  tagline: OutBrief turns an AI agent's report into a video call. Pick up to hear a spoken brief and read the cards. Type to cut in at any time. Say one sentence when you hang up, and the reply goes back to the same session.
+  image:
+    file: ../../../assets/logo.svg
+  actions:
+    - text: Download
+      link: /en/download/
+      icon: right-arrow
+    - text: Quick start
+      link: /en/docs/quick-start/
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+import PromoVideo from "../../../components/PromoVideo.astro";
+
+<PromoVideo label="OutBrief promo video" />
+
+## How it works
+
+<CardGrid stagger>
+  <Card title="Done means a call" icon="rocket">
+    When Claude Code or Codex finishes a task, or an agent on Multica posts a report, your phone and computer ring like a video call. Every device rings. Pick up on one and the others stop.
+  </Card>
+  <Card title="Voice plus cards" icon="open-book">
+    The agent tells you what it did and how it went, and the key points show up as cards. The daemon on your computer writes the brief with your own LLM.
+  </Card>
+  <Card title="Hang up to reply" icon="comment">
+    Type a question during the call. Leave a sentence when you hang up, and the daemon resumes the agent in the same session, or posts it to the Multica comment as you.
+  </Card>
+  <Card title="End-to-end encrypted, no login" icon="approve-check">
+    The server only relays ciphertext. It cannot read reports, briefs, or replies, and it deletes them when the call ends. Accounts are anonymous and devices pair by QR code. You can host the server yourself.
+  </Card>
+</CardGrid>
