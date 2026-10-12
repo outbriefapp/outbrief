@@ -7,6 +7,7 @@ const service = (connected: boolean): CallServiceStatus => ({
   popUp: true,
   unrestricted: true,
   connected,
+  push: "on",
 });
 
 describe("shownStatus", () => {

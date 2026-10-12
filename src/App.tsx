@@ -44,6 +44,7 @@ import {
   listPendingEvents,
   reportOutcome,
   type ServerSettings,
+  sendReceipt,
 } from "./serverClient.ts";
 import {
   type AppSettings,
@@ -358,6 +359,8 @@ export function App() {
                 );
                 return;
               }
+              // Heard of here: the server stops pushing this device for it (ADR 0010).
+              sendReceipt(server, event.id).catch((err) => console.warn("[outbrief] receipt", err));
               const personal = personalizeEvent(event, addressNameRef.current);
               opened.current.set(event.id, personal);
               dispatch({ type: "arrived", event: personal, missed: arrival.kind === "missed" });

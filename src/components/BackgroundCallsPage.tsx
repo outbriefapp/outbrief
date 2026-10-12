@@ -51,6 +51,18 @@ export function BackgroundCallsPage(props: {
               onChange={() => props.onOpen("popUp")}
             />
             <StatusRow
+              label={m.push}
+              hint={m.pushHint}
+              value={
+                status.push === "on"
+                  ? m.pushOn
+                  : status.push === "pending"
+                    ? m.pushPending
+                    : m.pushUnavailable
+              }
+              ok={status.push === "on"}
+            />
+            <StatusRow
               label={m.battery}
               hint={m.batteryHint}
               value={status.unrestricted ? m.unrestricted : m.restricted}
@@ -69,7 +81,8 @@ function StatusRow(props: {
   hint: string;
   value: string;
   ok: boolean;
-  onChange: () => void;
+  /** Where the user changes it; none when nothing on the phone does. */
+  onChange?: () => void;
 }) {
   const m = useT().callService;
   return (
@@ -79,7 +92,7 @@ function StatusRow(props: {
         <span className="background-row-hint muted">{props.hint}</span>
       </span>
       <span className={props.ok ? "background-ok" : "background-warn"}>{props.value}</span>
-      {!props.ok && (
+      {!props.ok && props.onChange && (
         <button type="button" className="link" onClick={props.onChange}>
           {m.change}
         </button>

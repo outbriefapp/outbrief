@@ -8,3 +8,4 @@ src-tauri/target/
 src-tauri/gen/
 logs/
 dist-android/
+google-services.json

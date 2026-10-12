@@ -131,6 +131,17 @@ export async function reportOutcome(
 }
 
 /**
+ * This device heard of the call (on its stream): the server stops pushing it for the call
+ * (ADR 0010 of outbrief-server). Sent for every call it hears of, rung or missed.
+ */
+export async function sendReceipt(s: ServerSettings, eventId: string): Promise<void> {
+  await request(s, `/v1/events/${encodeURIComponent(eventId)}/receipt`, {
+    method: "POST",
+    body: { via: "stream" },
+  });
+}
+
+/**
  * Takes the ringing call on this device. Every device of the account rings and the first to answer
  * has the call: resolves `{ answered: false }` with who has it when another device was first.
  */

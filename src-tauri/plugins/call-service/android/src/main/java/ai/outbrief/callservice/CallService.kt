@@ -247,6 +247,8 @@ class CallService : Service() {
       CallInbox.arrived(this, relayed)
       if (relayed.optString("status") == "received" && !relayed.has("handledBy")) {
         CallAlerts.incoming(this, config, relayed)
+        // Heard of here: the server pushes this phone no more for it (ADR 0010).
+        Push.receipt(config, relayed.optString("id"), "stream")
       }
     } catch (e: Exception) {
       Log.w(TAG, "event: ${e.message}")

@@ -91,6 +91,7 @@ class CallServicePlugin(private val activity: Activity) : Plugin(activity) {
     if (reconnect) CallInbox.clear(activity)
     CallAlerts.createChannels(activity, config.texts)
     CallService.sync(activity, reconnect)
+    Push.sync(activity)
     invoke.resolve(JSObject().put("ringtoneId", config.ringtoneId))
   }
 
@@ -144,7 +145,8 @@ class CallServicePlugin(private val activity: Activity) : Plugin(activity) {
    * What keeps calls from ringing in the background: `notifications` (granted / denied / prompt),
    * `fullScreen` (may show over the lock screen), `popUp` (may open the incoming-call screen over
    * other apps, OUTB-65), `unrestricted` (exempt from battery optimization);
-   * also `connected`: the service's stream is open.
+   * also `connected`: the service's stream is open, and `push` (`Push.status`): whether calls wake
+   * the phone by push.
    */
   @Command
   fun getStatus(invoke: Invoke) {
@@ -227,5 +229,6 @@ class CallServicePlugin(private val activity: Activity) : Plugin(activity) {
       .put("popUp", CallAlerts.mayPopUp(activity))
       .put("unrestricted", unrestricted)
       .put("connected", CallService.connected)
+      .put("push", Push.status(activity))
   }
 }

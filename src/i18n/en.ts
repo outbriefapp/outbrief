@@ -98,6 +98,12 @@ export const en: Messages = {
     unrestricted: "Unrestricted",
     restricted: "May be stopped",
     change: "Settings",
+    push: "Push wake-up",
+    pushHint:
+      "The server wakes the phone with a Google push, so calls ring even with the app swiped away or the phone asleep. Needs Google Play services on the phone.",
+    pushOn: "On",
+    pushPending: "Off",
+    pushUnavailable: "Not in this build",
   },
 
   incoming: {

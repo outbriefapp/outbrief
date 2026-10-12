@@ -39,6 +39,12 @@ export interface CallServiceStatus {
   unrestricted: boolean;
   /** The service's own stream to the server is open. */
   connected: boolean;
+  /**
+   * Calls wake this phone by push (ADR 0010 of outbrief-server): `on` once the server has its
+   * token; `pending` when it does not (yet), e.g. the server sends no pushes; `unavailable` in a
+   * build without a Firebase project.
+   */
+  push: "on" | "pending" | "unavailable";
 }
 
 /**

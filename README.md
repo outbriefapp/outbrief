@@ -41,9 +41,10 @@ pnpm tauri dev
 pnpm install
 pnpm tauri android init
 pnpm tauri icon app-icon.json   # init 只写入 Tauri 默认图标，这一步换成 OutBrief 图标
-pnpm tauri android dev      # 装到设备或模拟器；安装包用 scripts/build-android.sh（见「Android 安装包」）
+pnpm tauri android dev      # 开发调试。要含来电推送，先 export OUTBRIEF_FIREBASE_CONFIG=<google-services.json>
+scripts/build-android.sh    # 可安装的 APK，并把来电推送打进去。见「Android 安装包」
 pnpm tauri ios init
-pnpm tauri ios dev          # 发布包用 pnpm tauri ios build
+pnpm tauri ios dev          # 发布包用 pnpm tauri ios build。这一版 iOS 没有来电推送
 ```
 
 仓库里没有应用商店安装包。
@@ -65,6 +66,22 @@ pnpm tauri ios dev          # 发布包用 pnpm tauri ios build
 只有手机、不装桌面 App：先部署 server，再在电脑上 `login`，用手机扫终端里的二维码。手机上的 Multica、大模型、汇报语言经 server 加密转给这台电脑的 daemon，电脑要在线。有多台电脑时，在设置页顶部选一台。
 
 公共云端把 server 的 `OUTBRIEF_OPEN_SIGNUP=true` 打开后，第一台设备直接建账号，认领码不用填。界面里的路径随「设置 → 界面语言」变化；英文界面是 Settings → Devices → Add a device，加密在 Settings → Encryption。
+
+### 手机在后台或锁屏时响铃
+
+App 开在前台时，来电走事件流，桌面和手机都会响，不用额外设置。
+
+Android 上要把 App 划掉、或锁屏之后仍然响铃：
+
+1. 打开「设置 → 后台来电」，打开「App 在后台或锁屏时继续接收来电」。
+2. 同一页里允许「通知」「锁屏来电界面」「来电弹出界面」。来电弹出界面对应系统里的「显示在其他应用上层」；小米、OPPO、vivo 还要在应用权限里允许「后台弹出界面」。
+3. 电池优化选「不受限制」。有的手机还要允许 OutBrief 自启动、后台运行。
+4. 看同一页的「推送唤醒」：
+   - **已开启**：App 被划掉、进程不在时，server 用 Google 推送叫醒它。不用再装别的 App。
+   - **未开启**：先把 App 打开一次再看。还是未开启，就是这台 server 没配 `OUTBRIEF_FCM_SERVICE_ACCOUNT`，或者这个安装包的 Firebase 项目和 server 不是同一个。
+   - **这个安装包不支持**：打包时没有 `google-services.json`。来电只在 App 开着、连着事件流时到达。
+
+手机要能用 Google Play 服务。这一版 iOS 没有推送唤醒，来电只在 App 开着时到达。收到超过 2 分钟这台手机才知道的来电不会再响，记在「来电」页的未接里，可以自己点接听。
 
 ## 目录
 
@@ -251,14 +268,16 @@ pnpm dev            # 只起前端（浏览器里调 UI）
 | `pnpm build` | 构建前端到 `dist/` |
 | `pnpm tauri build` | 打包桌面安装包 |
 | `pnpm tauri android init` / `ios init` | 生成本地 Android / iOS 工程，再 `dev` 或 `build`。见上文「安装本仓库」 |
-| `scripts/build-android.sh` | 打 Android 试用安装包 `dist-android/OutBrief.apk`（见下） |
+| `scripts/build-android.sh` | 打带签名的 arm64 APK 到 `dist-android/OutBrief.apk`，并把来电推送打进去。见「Android 安装包」 |
 
 ## Android 安装包
 
 `scripts/build-android.sh` 打一个 arm64 的 release APK，直接装到手机上试用（不上架）。要先装好 rustup（`rustup target add aarch64-linux-android`，Homebrew 的 rust 没有 Android 目标）、JDK 17、Android SDK（`platforms;android-36`、`build-tools`）和 NDK，用 `ANDROID_HOME`、`NDK_HOME`、`JAVA_HOME` 指定。
 
-- 服务地址默认 `https://api.outbriefapp.com`，用 `VITE_OUTBRIEF_SERVER_URL` 换；手机连不到电脑上的 `localhost`。装好后在电脑上的 App 里打开「设置 → 设备 → 添加设备」，手机扫码加入同一个账号。
+- 服务地址默认 `https://api.outbriefapp.com`，用 `VITE_OUTBRIEF_SERVER_URL` 换；手机连不到电脑上的 `localhost`。这台默认服务器已经有主人，别人不能在上面新注册。自己部署时改成自己的地址；已经有账号时，用配对码加入。装好后在电脑上的 App 里打开「设置 → 设备 → 添加设备」，手机扫码加入同一个账号。
 - `src-tauri/gen/` 不进仓库：脚本在没有时先 `tauri android init`，每次按 `app-icon.json` 重新生成图标，再补上相机 / 麦克风权限（扫码、录音）和 release 签名。签名密钥第一次打包时生成在 `~/.outbrief-android/`（含随机密码，不在仓库里），之后一直用它签，新包才能覆盖安装。
+- 来电推送（outbrief-server 的 ADR 0010）由 `scripts/build-android.sh` 打进包里。脚本读取 `~/.outbrief-android/firebase/google-services.json`，或者 `OUTBRIEF_FIREBASE_CONFIG=<路径>` 指定的文件，再传给构建。直接跑 `pnpm tauri android dev` 或 `pnpm tauri android build` 时，要自己先 export 这个变量；只把文件放在默认路径、不经过这个脚本，包里仍然没有推送。
+- 在 Firebase 控制台给包名 `ai.outbrief.app` 添加一个 Android 应用，把下载的 `google-services.json` 放到上面的路径。同一个 Firebase 项目的服务账号密钥（整个 JSON）配给 server 的 `OUTBRIEF_FCM_SERVICE_ACCOUNT`。安装包和 server 不是同一个 Firebase 项目时，手机登记了令牌也收不到。文件不进仓库。没有它，包仍能安装，来电只在 App 开着、连着事件流时到达。用默认的 `https://api.outbriefapp.com` 时，必须用那台服务器所属的 Firebase 项目打包；自己另建一个项目，官方服务器叫不醒这个包。手机上怎么确认，见上文「手机在后台或锁屏时响铃」。
 - Android 的系统 WebView 用 Google Play 服务实现 `BarcodeDetector`，App 没声明时一扫码就闪退（很多手机也没有 Play 服务），所以 Android 版扫码用 `qr-scanner` 自带的解码 worker（`src/components/QrScanner.tsx`）。
 
 ## License
