@@ -29,8 +29,8 @@ interface Calls {
   azure: string[];
 }
 
-/** Routes stubbed fetches: token endpoint → fresh JWT, Azure TTS → `azure(token)`; nothing else. */
-function stubFetch(azure: (token: string) => Response | Promise<Response>) {
+/** Routes stubbed fetches: token endpoint → fresh JWT, Azure TTS → `azure(token, n)`; nothing else. */
+function stubFetch(azure: (token: string, n: number) => Response | Promise<Response>) {
   const calls: Calls = { endpoint: 0, azure: [] };
   vi.stubGlobal(
     "fetch",
@@ -43,7 +43,7 @@ function stubFetch(azure: (token: string) => Response | Promise<Response>) {
       if (url === "https://eastasia.tts.speech.microsoft.com/cognitiveservices/v1") {
         const token = new Headers(init?.headers).get("Authorization") ?? "";
         calls.azure.push(token);
-        return azure(token);
+        return azure(token, calls.azure.length);
       }
       throw new Error(`unexpected fetch ${url}`);
     }),
@@ -87,9 +87,10 @@ describe("SpeechSynthService", () => {
   });
 
   it("on 401 fetches a new token once and retries with it", async () => {
-    const first = fakeJwt(1);
-    const calls = stubFetch((token) =>
-      token === first ? new Response("", { status: 401 }) : audio("azure-mp3"),
+    // Reject by call order, not by comparing JWTs. fakeJwt embeds Date.now(), so a
+    // precomputed token stops matching when the test crosses a one-second boundary.
+    const calls = stubFetch((_token, n) =>
+      n === 1 ? new Response("", { status: 401 }) : audio("azure-mp3"),
     );
     const blob = await newSynth().synthesize("刷新令牌。", OPTS);
     expect(await blob.text()).toBe("azure-mp3");
@@ -110,23 +111,29 @@ describe("SpeechSynthService", () => {
   it("retries 5xx twice with exponential backoff before giving up", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     const calls = stubFetch(() => new Response("", { status: 503 }));
-    let settled = false;
     const run = newSynth()
       .synthesize("服务器故障。", OPTS)
-      .catch((err: unknown) => err)
-      .finally(() => {
-        settled = true;
-      });
-    let elapsed = 0;
-    while (!settled) {
-      // WebCrypto settles on a real event-loop turn, so yield one before advancing fake time.
-      await new Promise((r) => setImmediate(r));
-      await vi.advanceTimersByTimeAsync(100);
-      elapsed += 100;
+      .catch((err: unknown) => err);
+
+    // WebCrypto settles on a real turn. Count only the backoff timers (500 ms, then 1000 ms
+    // with Math.random mocked to 0), not how many turns the runner needed to get there.
+    async function untilAzure(n: number) {
+      for (let i = 0; i < 50 && calls.azure.length < n; i++) {
+        await new Promise((r) => setImmediate(r));
+      }
+      expect(calls.azure).toHaveLength(n);
     }
+
+    await untilAzure(1);
+    await vi.advanceTimersByTimeAsync(499);
+    expect(calls.azure).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    await untilAzure(2);
+    await vi.advanceTimersByTimeAsync(999);
+    expect(calls.azure).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(1);
+    await untilAzure(3);
     expect(await run).toBeInstanceOf(VoiceUnavailableError);
-    expect(elapsed).toBeGreaterThanOrEqual(1_500); // 500 ms + 1000 ms
-    expect(elapsed).toBeLessThan(2_000);
     expect(calls.azure).toHaveLength(3);
   });
 
