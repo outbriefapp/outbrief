@@ -15,7 +15,10 @@ export default defineConfig({
         root: { label: "简体中文", lang: "zh-CN" },
         en: { label: "English", lang: "en" },
       },
-      social: [{ icon: "github", label: "GitHub", href: "https://github.com/outbriefapp" }],
+      social: [
+        { icon: "github", label: "GitHub", href: "https://github.com/outbriefapp" },
+        { icon: "discord", label: "Discord", href: "https://discord.gg/TG8qHzdv6" },
+      ],
       editLink: { baseUrl: "https://github.com/outbriefapp/outbrief-website/edit/main/" },
       lastUpdated: true,
       customCss: ["./src/styles/custom.css"],

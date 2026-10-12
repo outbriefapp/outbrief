@@ -1,6 +1,6 @@
 # outbrief-website
 
-OutBrief 官网和文档站：<https://outbriefapp.com>。
+OutBrief 官网和文档站：<https://outbriefapp.com>。用户交流在 [Discord](https://discord.gg/TG8qHzdv6)。
 
 用 [Astro](https://astro.build) + [Starlight](https://starlight.astro.build) 构建，部署在 Cloudflare Pages（GitHub 集成：`main` 发布生产，每个 PR 自动生成预览地址）。
 
