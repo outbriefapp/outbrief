@@ -1,0 +1,74 @@
+---
+title: Install the app
+description: Install OutBrief on a Mac or an Android phone, or build it from source.
+sidebar:
+  order: 1
+---
+
+import { Aside, LinkButton, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+The OutBrief app is one codebase for desktop and phone (Tauri 2 + React 19).
+
+<Tabs syncKey="platform">
+<TabItem label="macOS">
+
+<Steps>
+
+1. Download `OutBrief_<version>_aarch64.dmg` (Apple Silicon) from the [download page](/en/download/).
+2. Open the dmg and drag OutBrief into Applications.
+3. The app is not notarized with a Developer ID, so macOS may block the first launch. Right-click the app in Finder → Open, or run:
+
+   ```bash
+   xattr -cr /Applications/OutBrief.app
+   ```
+
+4. If the daemon on this computer is running, the app joins its account on launch.
+
+</Steps>
+
+</TabItem>
+<TabItem label="Android">
+
+<Steps>
+
+1. Download `OutBrief_<version>_arm64.apk` from the [download page](/en/download/) and install it.
+2. Open the app and scan the QR code from Settings → Devices → Add a device on a device already in the account.
+3. Turn on the permissions in [Background calls](/en/docs/guides/background-calls/).
+
+</Steps>
+
+</TabItem>
+<TabItem label="Windows / Linux / iOS">
+
+No ready-made installer yet. Build from source:
+
+```bash
+git clone https://github.com/outbriefapp/outbrief-app
+cd outbrief-app
+pnpm install
+pnpm tauri build          # desktop installer in src-tauri/target/release/bundle/
+```
+
+For iOS, run `pnpm tauri ios init`, then `pnpm tauri ios build`. This version has no call pushes on iOS.
+
+You need Node ≥ 22.18, pnpm 9, Rust stable ≥ 1.85, and the [Tauri prerequisites](https://tauri.app/start/prerequisites/). See [Development and builds](/en/docs/development/).
+
+</TabItem>
+</Tabs>
+
+<Aside type="note">
+The app alone gets no calls. The computer that runs the agents also needs the [daemon](/en/docs/daemon/), paired into the same account.
+</Aside>
+
+## First launch
+
+Usually the app joins or creates an account by itself. The welcome screen only shows up when it cannot, most often because:
+
+- A private server has no owner yet and needs the claim code from its log
+- The server has closed signup and needs a pairing code
+- This device was just removed
+- The local daemon is installed but not running (it joins once the daemon starts)
+
+On the welcome screen you can change the server URL, create an account, or join by scanning, pasting a pairing link, or entering a code. See [Pair devices](/en/docs/guides/pairing/).
+
+<LinkButton href="/en/docs/guides/calls/" variant="secondary" icon="right-arrow">Next: take a call</LinkButton>

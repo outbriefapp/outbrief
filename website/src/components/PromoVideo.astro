@@ -1,0 +1,35 @@
+---
+interface Props {
+  label: string;
+}
+
+const { label } = Astro.props;
+---
+
+<figure class="promo">
+  <video
+    controls
+    playsinline
+    preload="metadata"
+    poster="/media/outbrief-promo-poster.jpg"
+    aria-label={label}
+  >
+    <source src="/media/outbrief-promo.mp4" type="video/mp4" />
+  </video>
+</figure>
+
+<style>
+  .promo {
+    margin: 0 auto 2rem;
+    max-width: 64rem;
+  }
+
+  video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.75rem;
+    background: #0f1115;
+    box-shadow: var(--sl-shadow-lg);
+  }
+</style>

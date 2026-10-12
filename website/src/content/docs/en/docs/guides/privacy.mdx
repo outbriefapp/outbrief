@@ -1,0 +1,57 @@
+---
+title: Encryption and privacy
+description: What is encrypted, what the server can see and keeps, and what happens when you change the key.
+sidebar:
+  order: 7
+---
+
+import { Aside, Card, CardGrid } from "@astrojs/starlight/components";
+
+Reports, briefs, and replies are encrypted between **your computer (the daemon)** and **your devices (the app)**. The server only forwards ciphertext and has no key.
+
+## Who sees what
+
+<CardGrid>
+  <Card title="Your computer and devices" icon="approve-check">
+    The report, the brief, the reply, and call history. Call history stays on each device.
+  </Card>
+  <Card title="The server" icon="padlock">
+    Only what routing needs: the source (claude-code / codex / multica), the time, which computer sent it, the Multica task id, and call and delivery status.
+  </Card>
+</CardGrid>
+
+## What the server keeps
+
+| What | How long |
+|---|---|
+| A call waiting to be taken | Ciphertext until a device answers, declines, or acknowledges it, then deleted |
+| A reply | Ciphertext while queued, deleted once delivered or failed; only the status stays |
+| Push records | Each phone's push token; the time and result of each push and receipt for one day |
+| Call history | Not kept. It is only on your devices |
+
+The server never stores or uses your Multica token either. It stays in the daemon on your computer.
+
+## Where the key comes from
+
+- **Nothing to do by default**: the daemon creates a random key on first run, and the desktop app on that computer picks it up.
+- **Devices that scan a QR code**: the key travels with the QR code from device to device. The server never sees it.
+- **Devices that only enter the 6 digits**: they ask for the encryption passphrase.
+
+## Set your own key
+
+In Settings → Encryption, enter a sentence of at least 12 characters. The same sentence gives the same key on every device.
+
+- The daemon on this computer switches too while it is online.
+- The key never changes on other computers through the server. Enter it there yourself.
+
+<Aside type="caution" title="After changing the key">
+- Calls encrypted with the old key and not yet taken can no longer be read.
+- History already on the device is unaffected, since it is stored decrypted.
+- A call that cannot be decrypted does not ring. The idle screen shows why, with Ignore. The app never falls back to plain text.
+</Aside>
+
+## Technical details
+
+AES-256-GCM with a random 12-byte IV each time. Ciphertext looks like `ob1.<keyId>.<iv>.<ciphertext>`. The passphrase goes through PBKDF2-SHA256 with 600,000 iterations to make the `obk1_` key; only the derived key is stored, never the sentence.
+
+The reasoning is in [ADR 0007: end-to-end encryption](/en/docs/adr/0007-end-to-end-encryption/) and [ADR 0006: relay only](/en/docs/adr/0006-relay-without-login-or-history/) (Chinese).

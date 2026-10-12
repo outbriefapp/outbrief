@@ -1,0 +1,41 @@
+---
+title: 手机后台响铃
+description: 让 Android 手机在 App 被划掉或锁屏时也能响铃。
+sidebar:
+  order: 4
+---
+
+import { Aside, Steps } from "@astrojs/starlight/components";
+
+App 开在前台时，桌面和手机都能正常响铃，不用额外设置。下面的步骤是为了让 **App 被划掉、或者锁屏之后**，Android 手机仍然能响铃。
+
+## 设置步骤
+
+<Steps>
+
+1. 打开「设置 → 后台来电」，打开「App 在后台或锁屏时也会响铃」。
+
+2. 在同一页允许下面三项：
+   - **通知**
+   - **锁屏来电界面**
+   - **来电弹出界面**：对应系统里的「显示在其他应用上层」。小米、OPPO、vivo 还要在应用权限里允许「后台弹出界面」。
+
+3. 把电池优化设成「不受限制」。有的手机还要允许 OutBrief 自启动、后台运行。
+
+4. 回到这一页，看「推送唤醒」的状态（见下表）。
+
+</Steps>
+
+## 「推送唤醒」的三种状态
+
+| 状态 | 意思 | 怎么办 |
+|---|---|---|
+| **已开启** | App 不在运行时，server 会用 Google 推送叫醒它 | 不用做什么，也不用装别的 App |
+| **未开启** | 这台 server 没配推送，或者安装包和 server 用的不是同一个 Firebase 项目 | 先把 App 打开一次再看。还是未开启，就请 server 管理员检查 `OUTBRIEF_FCM_SERVICE_ACCOUNT` |
+| **这个安装包不支持** | 打包时没有带推送配置 | 来电只在 App 开着时到达。需要推送就换一个带推送的安装包，见 [Android 安装包](/docs/development/#android-安装包) |
+
+<Aside type="caution">
+- 手机要能用 Google Play 服务。
+- 这一版 iOS 还没有推送唤醒，来电只在 App 开着时到达。
+- 超过 2 分钟才通知到这台手机的来电不会再响铃，会记在「来电」页的未接里，你可以自己点接听。
+</Aside>

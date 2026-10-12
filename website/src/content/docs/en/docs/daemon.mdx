@@ -1,0 +1,115 @@
+---
+title: Install the daemon
+description: Install outbrief-daemon on the computer that runs your agents and hook up Claude Code and Codex.
+sidebar:
+  order: 2
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+The daemon is a resident process on each computer that runs agents, much like Multica's `multica daemon`. It:
+
+- Takes the report at the end of each Claude Code / Codex turn, and reports from Multica tasks
+- Writes the brief with your LLM, encrypts it, and hands it to the server
+- Resumes the agent in the same session with your reply, or posts it to Multica
+- Connects out to the server, so **the computer opens no inbound port**
+
+## Install
+
+You need Node ≥ 22.18 and pnpm 9.
+
+<Steps>
+
+1. Get the code and install dependencies:
+
+   ```bash
+   git clone https://github.com/outbriefapp/outbrief-daemon
+   cd outbrief-daemon
+   pnpm install
+   ```
+
+2. Log in (create an account, or join one):
+
+   ```bash
+   node src/cli.ts login --server <server-url>
+   ```
+
+   On a server with no owner yet, it asks for the claim code, creates the account, and shows a QR code for other devices. If the account already exists, paste a pairing code or link at the prompt. See [Pair devices](/en/docs/guides/pairing/).
+
+3. Keep it running and hook up the agents:
+
+   <Tabs syncKey="os">
+   <TabItem label="macOS">
+
+   ```bash
+   node src/cli.ts install
+   ```
+
+   This writes a launchd job (start at login, restart on exit) and the Claude Code and Codex Stop hooks. Logs go to `~/.outbrief/logs/`.
+
+   </TabItem>
+   <TabItem label="Linux / Windows">
+
+   `install` relies on macOS `launchctl` and stops there on these systems. Run the daemon with your own process manager (systemd, Task Scheduler, …):
+
+   ```bash
+   node src/cli.ts run
+   ```
+
+   Then add the Stop hooks yourself:
+
+   | Agent | Config | Command |
+   |---|---|---|
+   | Claude Code | `hooks.Stop` in `~/.claude/settings.json` | `"<absolute node path>" "<daemon folder>/src/cli.ts" hook claude-code` |
+   | Codex | `hooks.Stop` in `~/.codex/hooks.json` | `"<absolute node path>" "<daemon folder>/src/cli.ts" hook codex` |
+
+   </TabItem>
+   </Tabs>
+
+</Steps>
+
+<Aside type="caution">
+- `install` writes absolute paths to node and `src/cli.ts`, so leave the folder where it is.
+- After a new `login` while the daemon runs, run `install` again so it uses the new token.
+- When the Codex hook command changes, trust it again in Codex.
+</Aside>
+
+To type `outbrief-daemon` from any folder, run `pnpm link --global` once. Below, `outbrief-daemon` means `node src/cli.ts`.
+
+## Which reports ring
+
+- **Claude Code / Codex**: at the end of each turn, the hook hands the last reply to the daemon. Codex only reports sessions that `codex resume` can open; internal turns such as title generation are skipped.
+- **Multica**: once workspaces are connected in Settings → Multica, finished tasks call. See [Multica and calling an agent](/en/docs/guides/multica/).
+- Claude Code / Codex running inside a Multica task do not report twice through the hook.
+
+The hook waits at most 5 seconds and returns as soon as the daemon accepts the report. If the daemon is not running, the report is dropped. A hook failure never affects the agent.
+
+## Test the hook without a real call
+
+Every report that reaches the daemon makes a real call. To check the setup, use dry runs:
+
+```bash
+# Print the report the hook parsed, without sending it
+echo '{"session_id":"s1","cwd":"/tmp/demo","last_assistant_message":"Refactored the login module."}' \
+  | node src/cli.ts hook claude-code --dry-run
+
+# The daemon validates and echoes it back, with no call
+curl -X POST "http://127.0.0.1:8790/report?dryRun=1" -H "Content-Type: application/json" \
+  -d '{"source":"generic","title":"demo","content":"Refactored the login module, 42 tests pass."}'
+```
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `outbrief-daemon login` | Create an account, or join with a pairing code |
+| `outbrief-daemon pair` | Show a QR code and pairing code for a new device |
+| `outbrief-daemon install` / `uninstall` | Write or remove the Stop hooks and the launchd job |
+| `outbrief-daemon run` | Run in the foreground |
+| `outbrief-daemon brief-eval <files…>` | Write briefs for report files with the current LLM (nothing is sent) and print quality metrics |
+
+## Config file
+
+Everything lives in `~/.outbrief/daemon.json` (mode 600): the device token, the Multica token, the LLM, the report language, and the encryption key. Change them in the app; after editing the file by hand, restart the daemon.
+
+For the local HTTP API, how briefs are written, and the outbox, see [Daemon local API](/en/docs/reference/daemon-api/) (Chinese).

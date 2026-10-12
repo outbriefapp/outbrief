@@ -1,0 +1,115 @@
+---
+title: 安装 Daemon
+description: 在跑 Agent 的电脑上安装 outbrief-daemon，接上 Claude Code 和 Codex。
+sidebar:
+  order: 2
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+daemon 是每台跑 Agent 的电脑上的常驻进程，作用类似 Multica 的 `multica daemon`。它会：
+
+- 接收 Claude Code / Codex 每轮结束时的汇报，以及 Multica 任务的汇报
+- 用你配的大模型写简报，加密后交给 server
+- 收到你的回复后，在原会话里接着运行 Agent，或者把回复发到 Multica
+- 主动连接 server，**电脑上不用开任何入站端口**
+
+## 安装
+
+需要 Node ≥ 22.18 和 pnpm 9。
+
+<Steps>
+
+1. 下载并安装依赖：
+
+   ```bash
+   git clone https://github.com/outbriefapp/outbrief-daemon
+   cd outbrief-daemon
+   pnpm install
+   ```
+
+2. 登录（创建账号或加入已有账号）：
+
+   ```bash
+   node src/cli.ts login --server <服务地址>
+   ```
+
+   server 还没有主人时，会提示你输入认领码，然后创建账号，并显示二维码给其他设备扫。已经有账号的话，在提示符处粘贴配对码或配对链接即可。详见 [配对设备](/docs/guides/pairing/)。
+
+3. 让它常驻后台，并接上 Agent：
+
+   <Tabs syncKey="os">
+   <TabItem label="macOS">
+
+   ```bash
+   node src/cli.ts install
+   ```
+
+   这条命令会写入 launchd 配置，登录时自动启动、退出后自动拉起，同时写入 Claude Code 和 Codex 的 Stop hook。日志在 `~/.outbrief/logs/`。
+
+   </TabItem>
+   <TabItem label="Linux / Windows">
+
+   `install` 依赖 macOS 的 `launchctl`，在这两个系统上用不了。请用系统自带的进程管理器（systemd、任务计划等）运行：
+
+   ```bash
+   node src/cli.ts run
+   ```
+
+   再手动把 Stop hook 加到配置里：
+
+   | Agent | 配置文件 | 命令 |
+   |---|---|---|
+   | Claude Code | `~/.claude/settings.json` 的 `hooks.Stop` | `"<node 绝对路径>" "<daemon 目录>/src/cli.ts" hook claude-code` |
+   | Codex | `~/.codex/hooks.json` 的 `hooks.Stop` | `"<node 绝对路径>" "<daemon 目录>/src/cli.ts" hook codex` |
+
+   </TabItem>
+   </Tabs>
+
+</Steps>
+
+<Aside type="caution">
+- `install` 写进去的是 node 和 `src/cli.ts` 的绝对路径，所以装完以后不要移动这个目录。
+- daemon 运行时重新 `login` 过，要再执行一次 `install`，新令牌才会生效。
+- Codex 的 hook 命令变了以后，要在 Codex 里重新信任一次。
+</Aside>
+
+想在任意目录直接用 `outbrief-daemon` 命令，可以执行一次 `pnpm link --global`。下文的 `outbrief-daemon` 等同于 `node src/cli.ts`。
+
+## 哪些汇报会来电
+
+- **Claude Code / Codex**：每轮 Agent 结束时，hook 把最后一条回复交给 daemon。Codex 只上报能用 `codex resume` 打开的会话，后台生成标题这类内部轮次会被跳过。
+- **Multica**：在 App 的「设置 → Multica」里接上工作区后，任务完成就会来电，见 [Multica 与呼叫 Agent](/docs/guides/multica/)。
+- 在 Multica 任务里运行的 Claude Code / Codex 不会通过 hook 重复上报。
+
+hook 最多等 5 秒，daemon 收下汇报就返回。daemon 没在运行时，这条汇报会被丢弃。hook 的任何失败都不会影响 Agent 本身。
+
+## 测试 hook，但不想真的来电
+
+每一条进到 daemon 的汇报都会真的打电话。只想检查配置时，用 dry-run：
+
+```bash
+# 只打印 hook 解析出的汇报，不发给 daemon
+echo '{"session_id":"s1","cwd":"/tmp/demo","last_assistant_message":"登录模块重构完成。"}' \
+  | node src/cli.ts hook claude-code --dry-run
+
+# daemon 只校验并原样返回，不会来电
+curl -X POST "http://127.0.0.1:8790/report?dryRun=1" -H "Content-Type: application/json" \
+  -d '{"source":"generic","title":"demo","content":"登录模块重构完成，42 个测试通过。"}'
+```
+
+## 常用命令
+
+| 命令 | 作用 |
+|---|---|
+| `outbrief-daemon login` | 创建账号，或者用配对码加入 |
+| `outbrief-daemon pair` | 显示二维码和配对码，添加新设备 |
+| `outbrief-daemon install` / `uninstall` | 写入或删除 Stop hook 和 launchd 常驻配置 |
+| `outbrief-daemon run` | 在前台运行 |
+| `outbrief-daemon brief-eval <文件…>` | 用当前大模型给汇报文件生成简报（不发出去），打印质量指标 |
+
+## 配置文件
+
+所有配置都在 `~/.outbrief/daemon.json`（权限 600）里，包括设备令牌、Multica 令牌、大模型、汇报语言和加密密钥。一般在 App 里改就行；手工改了以后要重启 daemon。
+
+本机接口、简报生成过程和发件箱机制，见 [Daemon 本机接口](/docs/reference/daemon-api/)。

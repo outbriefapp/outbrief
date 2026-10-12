@@ -1,0 +1,116 @@
+---
+title: Self-host the server
+description: Deploy outbrief-server with Node and MySQL, or on Railway.
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+outbrief-server does one thing: it **relays ciphertext** between your computer and your devices. It has no key and cannot read reports, briefs, or replies. It deletes ciphertext when a call ends, and it never calls an LLM.
+
+<Aside type="caution" title="Run exactly one instance">
+Presence, live pushes, settings relay, and rate limits live in process memory. Keep the replica count at 1 and turn off autoscaling.
+
+To release, **stop the old process, then start the new one** (Kubernetes `strategy: Recreate`). A rolling or blue-green deploy runs two versions at once and drops calls. See [ADR 0009](/en/docs/adr/0009-single-instance-first/).
+</Aside>
+
+## Deploy
+
+<Tabs>
+<TabItem label="Run it directly">
+
+You need Node ≥ 22.18, pnpm 9, and MySQL 8.
+
+<Steps>
+
+1. Get the code and install dependencies:
+
+   ```bash
+   git clone https://github.com/outbriefapp/outbrief-server
+   cd outbrief-server
+   pnpm install
+   ```
+
+2. Start it. The deployment injects the connection string; the user and password below are placeholders:
+
+   ```bash
+   OUTBRIEF_DATABASE_URL='mysql://USER:PASSWORD@HOST:3306/outbrief' PORT=8787 pnpm start
+   ```
+
+   Tables are created and migrated on startup.
+
+3. Find the claim code in the log and write it down:
+
+   ```text
+   Claim code: XXXX-XXXX-XXXX
+   ```
+
+4. Health check: `GET /healthz`
+
+</Steps>
+
+</TabItem>
+<TabItem label="Railway">
+
+The repo's `railway.json` sets the health check and restart policy. Set the rest in Railway:
+
+<Steps>
+
+1. Add a MySQL 8 service (image `mysql:8.4`, volume on `/var/lib/mysql`). Private network only; no public TCP proxy.
+2. Set the server's variables:
+   - `OUTBRIEF_DATABASE_URL` referencing `${{MySQL.MYSQL_URL}}`. Never write the connection string into the repo
+   - `PORT=8787`
+   - `OUTBRIEF_FCM_SERVICE_ACCOUNT` for call pushes (see below)
+3. Set replicas to 1 and attach a volume to the server (for example `/data`; the code never touches it). Railway does not let two deployments hold the same volume, so a release stops the old one before starting the new one, which is exactly the single-instance rule.
+4. For a custom domain, add the CNAME and `_railway-verify` TXT records Railway gives you. On Cloudflare, keep it DNS only (gray cloud) so Railway can issue the certificate.
+
+</Steps>
+
+</TabItem>
+</Tabs>
+
+<Aside type="tip">
+Back up MySQL.
+</Aside>
+
+## Who can create an account
+
+| Deployment | Setting | Behavior |
+|---|---|---|
+| Private (default) | `OUTBRIEF_OPEN_SIGNUP=false` | The first device enters the claim code from the log. After that, signup closes and other devices join with pairing codes |
+| Public cloud | `OUTBRIEF_OPEN_SIGNUP=true` | Anyone can create an account, no claim code, rate limited |
+
+## Environment
+
+Nothing is required, and there is no `.env` file to create.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `OUTBRIEF_DATABASE_URL` | The local docker `outbrief` database | MySQL connection string, injected by the platform |
+| `PORT` | `8787` | Listen port |
+| `OUTBRIEF_OPEN_SIGNUP` | `false` | Open signup, see above |
+| `OUTBRIEF_FCM_SERVICE_ACCOUNT` | Unset | Firebase service account key for call pushes, as the whole JSON or a file path. If set but unreadable, the server fails to start |
+
+<Aside type="danger">
+Keep the connection string and the Firebase key out of the repo.
+</Aside>
+
+## Call pushes (optional)
+
+Without pushes, calls arrive over the event stream while the app is open. To ring an Android phone after the app is swiped away, set up pushes:
+
+<Steps>
+
+1. In the Firebase console, create a project and add an Android app with package `ai.outbrief.app`.
+2. Put that project's service account key (the whole JSON) in the server's `OUTBRIEF_FCM_SERVICE_ACCOUNT`.
+3. Build the Android app with the same project's `google-services.json`; see [Android package](/en/docs/development/#android-package).
+
+</Steps>
+
+A push carries no content, only the call id. The phone then fetches the ciphertext with its own token, decrypts, and rings. Without a receipt the server pushes again every 10 seconds, up to 3 times. Design: [ADR 0010](/en/docs/adr/0010-wake-phones-with-push/).
+
+## Next
+
+- Run it locally for development: [Development and builds](/en/docs/development/)
+- Every endpoint: [Server API](/en/docs/reference/server-api/) (Chinese)

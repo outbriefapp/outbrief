@@ -1,0 +1,72 @@
+---
+title: How it works
+description: What OutBrief is made of, and where a call comes from and goes.
+sidebar:
+  order: 0
+---
+
+import { Card, CardGrid, LinkCard, Steps } from "@astrojs/starlight/components";
+import Architecture from "../../../../components/Architecture.astro";
+import Screen from "../../../../components/Screen.astro";
+import incoming from "../../../../assets/screens/incoming.jpg";
+
+OutBrief lets an AI agent report to you with a phone call. When a task is done, your phone and computer ring. Pick up to hear the key points. Say one sentence when you hang up, and the reply goes back to the same session.
+
+<Screen src={incoming} alt="The desktop and the phone ring when an agent finishes" caption="When a task is done, the desktop and the phone ring together." />
+
+## Three parts
+
+<Architecture lang="en" />
+
+<CardGrid>
+  <Card title="outbrief-daemon" icon="laptop">
+    Runs in the background on the computer that runs your agents. It turns each report into a spoken brief with your own LLM, encrypts it, and hands it to the server. It also delivers your reply back to the session.
+  </Card>
+  <Card title="outbrief-server" icon="random">
+    A relay. It stores and forwards ciphertext only, holds no key, and cannot read reports, briefs, or replies. Ciphertext is deleted when the call ends. Use the official server or host your own.
+  </Card>
+  <Card title="outbrief-app" icon="phone">
+    Runs on your phone and computer. It rings, speaks the brief with cards, answers your questions, and sends your reply back encrypted.
+  </Card>
+</CardGrid>
+
+## The life of a call
+
+<Steps>
+
+1. **The agent finishes**
+
+   Claude Code or Codex ends a turn, or an agent on Multica posts a report comment.
+
+2. **The daemon writes a brief**
+
+   With the LLM you configured, the daemon turns the report into a short spoken brief, a few cards, and the questions you need to decide. It encrypts them and sends them to the server.
+
+3. **Your devices ring**
+
+   Every device in the account rings. Pick up on any of them, and the others stop.
+
+4. **Listen and ask**
+
+   The app speaks the brief while the cards turn. Type to cut in at any time; the LLM answers from the full report.
+
+5. **Hang up to reply**
+
+   What you said and decided during the call becomes a reply that you can edit before sending. The daemon resumes the agent in the same session, or posts the reply to the Multica issue as you.
+
+</Steps>
+
+## Privacy
+
+- **No login**: accounts are anonymous, and devices pair by QR code.
+- **End-to-end encryption**: content is encrypted between your computer and your devices. The server only relays ciphertext.
+- **Your own LLM and voice**: briefs are written on your computer, speech is made on your device, and questions go straight to the endpoint you configured. None of it goes through the server.
+
+Details are in [Encryption and privacy](/en/docs/guides/privacy/).
+
+## Next
+
+<CardGrid>
+  <LinkCard title="Quick start" description="Install the three parts and get your first call." href="/en/docs/quick-start/" />
+  <LinkCard title="Download the app" description="Installers for macOS and Android." href="/en/download/" />
+</CardGrid>

@@ -1,0 +1,77 @@
+---
+title: Multica and calling an agent
+description: Connect Multica workspaces so their tasks call you, and dispatch work to an agent by saying one sentence.
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps } from "@astrojs/starlight/components";
+import Screen from "../../../../../components/Screen.astro";
+import dispatch from "../../../../../assets/screens/dispatch.jpg";
+import dispatched from "../../../../../assets/screens/dispatched.jpg";
+import followup from "../../../../../assets/screens/followup.jpg";
+
+## Connect Multica
+
+Once connected, agents on Multica call you when they finish, and your reply after hang-up goes back to the issue as a comment.
+
+<Steps>
+
+1. In the app, open Settings → Multica, enter your own Multica API token, and verify it.
+2. Tick the workspaces to watch. You can pick several.
+3. Save.
+
+</Steps>
+
+To change workspaces later, use Change workspaces. There is no need to enter the token again.
+
+<Aside type="note" title="Where the token lives">
+The token is stored only in the daemon on your computer (`~/.outbrief/daemon.json`, mode 600) and never crosses the server in plain text. The app shows only its tail, like `mul_…xxxx`.
+
+The daemon uses it to watch Multica tasks and post replies, so Multica tasks do not call while the computer is off or the daemon is not running.
+</Aside>
+
+With several workspaces, calls show the workspace before the project name.
+
+## Call an agent: one sentence, one task
+
+<Screen src={dispatch} alt="Call an agent: pick a project and an agent, then describe the task" caption="Pick a project and an agent, say what you need, and tap the green button." />
+
+The green phone button in the middle of the idle screen is Call an agent:
+
+<Steps>
+
+1. The project and agent default to your last dispatch. Open the bottom panel to change them.
+2. Describe the task in the text box. Phone voice input works well; mention priority and due date if you like.
+3. Attach images if needed. On desktop, paste a screenshot or drop it into the text box.
+4. Tap the call button.
+
+</Steps>
+
+The chosen agent writes the issue from your words and extracts the title, priority, and due date. The calling screen waits until the issue exists, then shows its number and title. Don't want to wait? Go to My dispatches.
+
+<Screen src={dispatched} alt="The dispatch is accepted and the new issue is shown" caption="Once the agent takes it, the new issue is shown." />
+
+## Follow up on an existing issue
+
+<Screen src={followup} alt="Pick an existing issue to follow up on" caption="Pick the issue, and what you say is posted to it as a comment." />
+
+Pick an existing issue on the dispatch screen, and your words are posted to it as a comment. Multica hands it to the issue's assigned agent as usual. Filter issues by title, number (`61`, `OUTB-61`), or status.
+
+## My dispatches
+
+My dispatches lists everything sent from this computer and the current status of each issue. Every device in the account can see it.
+
+## Button grayed out?
+
+The call button is disabled, with the reason on screen, when:
+
+- The computer is offline, or its daemon is not running
+- Multica is not set up on the computer yet
+- The chosen agent's computer is offline in Multica
+
+It turns back on by itself once that is fixed.
+
+<Aside type="tip">
+Any number of images, up to 100 MB each, the same limit as Multica. Large images are compressed on the device before upload.
+</Aside>

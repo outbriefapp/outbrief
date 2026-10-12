@@ -1,0 +1,41 @@
+---
+title: Background calls
+description: Make an Android phone ring when the app is swiped away or the screen is locked.
+sidebar:
+  order: 4
+---
+
+import { Aside, Steps } from "@astrojs/starlight/components";
+
+With the app in the foreground, desktop and phone ring with no setup. The steps below make an Android phone ring **after the app is swiped away or the screen is locked**.
+
+## Steps
+
+<Steps>
+
+1. Open Settings → Background calls and turn on "Calls ring in the background and on the lock screen too".
+
+2. On the same page, allow:
+   - **Notifications**
+   - **Lock-screen call screen**
+   - **Pop-up calls**: the system's "Display over other apps". Xiaomi, OPPO, and vivo also need "Show pop-up windows while running in the background" in app permissions.
+
+3. Set battery optimization to Unrestricted. Some phones also need OutBrief allowed to auto-start and run in the background.
+
+4. Check Push wake-up on the same page (see below).
+
+</Steps>
+
+## Push wake-up states
+
+| State | Meaning | What to do |
+|---|---|---|
+| **On** | When the app is not running, the server wakes it with a Google push | Nothing. No other app needed |
+| **Off** | The server has no push set up, or the app and the server use different Firebase projects | Open the app once and check again. Still off? Ask the server admin to check `OUTBRIEF_FCM_SERVICE_ACCOUNT` |
+| **Not in this build** | The package was built without push | Calls arrive only while the app is open. For push, use a build with it; see [Android package](/en/docs/development/#android-package) |
+
+<Aside type="caution">
+- The phone needs Google Play services.
+- This version has no push wake-up on iOS. Calls arrive only while the app is open.
+- A call this phone learns about more than 2 minutes late does not ring. It is listed as missed on the Calls page, where you can answer it.
+</Aside>

@@ -1,0 +1,109 @@
+---
+title: Pair devices
+description: There is no login. Devices join one account with a QR code or a pairing code.
+sidebar:
+  order: 1
+---
+
+import { Aside, Card, CardGrid, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+OutBrief has no username or password. The account is anonymous: the first device creates it, and later devices join with a **pairing code**. Calls only go to devices in the same account.
+
+## Pairing codes and QR codes
+
+- A pairing code has 6 digits. It **lasts 10 minutes and works once**.
+- The QR code and the pairing link also carry the server URL and the end-to-end key. They pass from device to device; the server never sees the key.
+- A pairing link looks like `outbrief://pair?server=<server-url>&code=<6 digits>&key=obk1_…`
+
+<Aside type="tip">
+Scan when you can. With only the 6 digits, the new device does not get the key and asks for the encryption passphrase (see below).
+</Aside>
+
+## Where to get a QR code
+
+<CardGrid>
+  <Card title="In the app" icon="phone">
+    On a device already in the account, open Settings → Devices → Add a device. The page says when the new device has joined.
+  </Card>
+  <Card title="In a terminal" icon="laptop">
+    On a computer with the daemon, run `node src/cli.ts pair`. The terminal prints a QR code and a pairing code.
+  </Card>
+</CardGrid>
+
+## How each device joins
+
+<Tabs>
+<TabItem label="Desktop app, same computer">
+
+**Automatic.** When the daemon on this computer is running, the desktop app asks it for a pairing code and the key on first launch and joins.
+
+If the daemon is installed but not running, the welcome screen waits and joins once the daemon starts.
+
+</TabItem>
+<TabItem label="Phone">
+
+Scan the QR code from Add a device or from the terminal with the phone camera.
+
+The server URL in the QR code must be one the phone can reach: a LAN IP or a public `https://` URL, never `127.0.0.1`.
+
+</TabItem>
+<TabItem label="Daemon on another computer">
+
+<Steps>
+
+1. On a device in the account, open Settings → Devices → Add a device and copy the command on the page.
+2. In the daemon folder on that computer, run:
+
+   ```bash
+   node src/cli.ts login 'outbrief://pair?server=…&code=123456&key=obk1_…'
+   ```
+
+3. If the daemon is already running, run `node src/cli.ts install` again so it uses the new token.
+
+</Steps>
+
+</TabItem>
+<TabItem label="Desktop app, another computer">
+
+The desktop app does not use a camera. Copy the pairing link and paste it into the desktop app's welcome screen.
+
+</TabItem>
+</Tabs>
+
+## With only the 6 digits
+
+The code alone joins the account but does not carry the key, so you also enter the **encryption passphrase**: the sentence set in Settings → Encryption, at least 12 characters. The same sentence gives the same key on every device.
+
+If no passphrase was ever set, use the QR code or a pairing link with `key=`.
+
+```bash
+node src/cli.ts login 123456   # the daemon joins with 6 digits and asks for the passphrase
+```
+
+## Installing the app first
+
+The daemon does not have to create the account:
+
+<Steps>
+
+1. Open the app. On the welcome screen, enter the server URL and the claim code from the server log, and click Create a new account.
+2. Copy the pairing link from Settings → Devices → Add a device.
+3. On the computer, run `node src/cli.ts login '<pairing link>'`.
+
+</Steps>
+
+<Aside>
+Once the daemon on a computer is paired and running, the desktop app on that computer joins the daemon's account.
+</Aside>
+
+## Phone only, no desktop app
+
+Deploy the server, run `login` on the computer, and scan the terminal's QR code with the phone.
+
+When you change Multica, the LLM, or the report language on the phone, the setting travels encrypted through the server to the daemon on that computer, so the computer has to be online. With several computers, pick one at the top of the settings page.
+
+## Managing devices
+
+Settings → Devices on any device lists every device in the account. Remove any of them; a removed device's token stops working at once and it gets no more calls.
+
+To join another account, scan or enter a code on the same page. The device leaves its current account first.

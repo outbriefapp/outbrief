@@ -1,0 +1,109 @@
+---
+title: 配对设备
+description: 没有登录，设备之间用二维码或配对码加入同一个账号。
+sidebar:
+  order: 1
+---
+
+import { Aside, Card, CardGrid, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+OutBrief 没有用户名和密码。账号是匿名的，第一台设备创建它，之后的设备用**配对码**加入。来电只会发给同一个账号里的设备。
+
+## 配对码和二维码
+
+- 配对码是 6 位数字，**10 分钟内有效，只能用一次**。
+- 二维码和配对链接里除了配对码，还带着服务地址和端到端加密的密钥。它们由设备直接交给设备，server 看不到密钥。
+- 配对链接长这样：`outbrief://pair?server=<服务地址>&code=<6位>&key=obk1_…`
+
+<Aside type="tip">
+能扫码就扫码。只输 6 位数字时，新设备拿不到加密密钥，还要再输一次加密口令（见下文）。
+</Aside>
+
+## 在哪里拿二维码
+
+<CardGrid>
+  <Card title="App 里" icon="phone">
+    在已加入账号的设备上，打开「设置 → 设备 → 添加设备」。新设备加入后，这一页会提示「xx 已加入」。
+  </Card>
+  <Card title="电脑终端里" icon="laptop">
+    在装了 daemon 的电脑上执行 `node src/cli.ts pair`，终端会打印二维码和配对码。
+  </Card>
+</CardGrid>
+
+## 不同设备怎么加入
+
+<Tabs>
+<TabItem label="同一台电脑的桌面 App">
+
+**自动加入。** 这台电脑的 daemon 正在运行时，桌面 App 第一次打开会自己向 daemon 要配对码和密钥，直接加入。
+
+如果 daemon 装了但没在运行，欢迎页会停在那里等着，daemon 启动后会自动加入。
+
+</TabItem>
+<TabItem label="手机">
+
+用手机摄像头扫描「添加设备」页或终端里的二维码。
+
+二维码里的服务地址必须是手机自己能访问的：局域网 IP 或公网 `https://` 地址，不能是 `127.0.0.1`。
+
+</TabItem>
+<TabItem label="另一台电脑的 daemon">
+
+<Steps>
+
+1. 在已加入的设备上打开「设置 → 设备 → 添加设备」，复制页面上的命令。
+2. 在那台电脑的 daemon 目录里执行：
+
+   ```bash
+   node src/cli.ts login 'outbrief://pair?server=…&code=123456&key=obk1_…'
+   ```
+
+3. 如果 daemon 已经在运行，再执行一次 `node src/cli.ts install`，新令牌才会生效。
+
+</Steps>
+
+</TabItem>
+<TabItem label="另一台电脑的桌面 App">
+
+桌面端不开摄像头。把配对链接复制下来，粘贴到桌面 App 的欢迎页。
+
+</TabItem>
+</Tabs>
+
+## 只有 6 位数字时
+
+只输配对码也能加入，但是拿不到加密密钥，所以还要输入一句**加密口令**：就是「设置 → 加密」里设的那句话，至少 12 个字符。每台设备用同一句话，就会得到同一把密钥。
+
+还没设过加密口令的话，就用二维码或带 `key=` 的配对链接。
+
+```bash
+node src/cli.ts login 123456   # daemon 用 6 位码加入，会提示输入加密口令
+```
+
+## 先装 App 也可以
+
+不一定要 daemon 先建账号：
+
+<Steps>
+
+1. 打开 App，在欢迎页填服务地址和 server 日志里的认领码，点「创建新账号」。
+2. 在「设置 → 设备 → 添加设备」里复制配对链接。
+3. 在电脑上执行 `node src/cli.ts login '<配对链接>'`。
+
+</Steps>
+
+<Aside>
+同一台电脑上的 daemon 配对并运行之后，这台电脑的桌面 App 会加入 daemon 所在的账号。
+</Aside>
+
+## 只有手机，不装桌面 App
+
+部署好 server，在电脑上执行 `login`，再用手机扫终端里的二维码即可。
+
+手机上改 Multica、大模型、汇报语言时，设置会加密后经 server 转给这台电脑的 daemon，所以电脑要在线。账号里有多台电脑时，在设置页顶部选一台。
+
+## 管理设备
+
+在任意一台设备的「设置 → 设备」里能看到账号下的所有设备，可以逐台移除。被移除的设备令牌立即失效，不会再收到来电。
+
+想加入另一个账号：在同一页扫码或输码，这台设备会先退出当前账号。

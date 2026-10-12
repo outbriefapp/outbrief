@@ -1,0 +1,143 @@
+---
+title: Development and builds
+description: Run the server, daemon, and app locally for development, and build the Android package.
+sidebar:
+  order: 4
+---
+
+import { Aside, FileTree, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+## Folder layout
+
+Keep the three repos side by side. `pnpm dev:all` looks for the server next to the app:
+
+<FileTree>
+
+- outbrief/
+  - outbrief-server/ Hono server + MySQL
+  - outbrief-app/ Tauri 2 + React 19 client
+  - outbrief-daemon/ resident process on each computer
+
+</FileTree>
+
+All need Node ≥ 22.18 and pnpm 9. The app also needs Rust stable ≥ 1.85 and the [Tauri prerequisites](https://tauri.app/start/prerequisites/); the server needs Docker.
+
+## 1. Local database
+
+The local database is a MySQL 8 container that **must be named `some-mysql`**, publishing port 3306. `pnpm dev:all` finds it by that name and never creates it.
+
+<Steps>
+
+1. Create the container once. `MYSQL_ROOT_PASSWORD` is only for root on this machine:
+
+   ```bash
+   docker run -d --name some-mysql --restart unless-stopped \
+     -e MYSQL_ROOT_PASSWORD='local-root-password' \
+     -p 3306:3306 mysql:8.4
+   until docker exec some-mysql mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done
+   ```
+
+2. In outbrief-server, create the databases and user once. At the password prompt, type the root password above:
+
+   ```bash
+   docker exec -i some-mysql mysql -uroot -p < db/bootstrap.sql
+   ```
+
+   This creates `outbrief` and `outbrief_test` and an `outbrief` user for local use only.
+
+</Steps>
+
+If the container already exists, don't `docker run` again. Start a stopped one with `docker start some-mysql`.
+
+## 2. Run it
+
+<Tabs>
+<TabItem label="One command (recommended)">
+
+In outbrief-app:
+
+```bash
+pnpm install
+pnpm dev:all
+```
+
+It brings up the database container, the server next door, and the desktop window. Server logs go to `logs/server.log`. Quit from the tray or press Ctrl+C to stop them all.
+
+- If the server lives elsewhere, set `OUTBRIEF_SERVER_DIR=<folder>`.
+- The script passes the claim code to the desktop app so it creates the first account. With a local daemon, it joins the daemon's account instead.
+- It closes any desktop app still running before it starts.
+
+</TabItem>
+<TabItem label="Separately">
+
+```bash
+# outbrief-server
+pnpm db:migrate   # create tables (startup does this too)
+pnpm dev          # restarts on change
+
+# outbrief-app
+pnpm tauri dev    # desktop window + hot reload, frontend on :1520
+pnpm dev          # frontend only, in a browser
+
+# outbrief-daemon
+node src/cli.ts login --server http://127.0.0.1:8787
+node src/cli.ts run
+```
+
+</TabItem>
+</Tabs>
+
+<Aside type="caution" title="Don't call yourself while testing">
+The server and daemon running on your machine are likely the ones you actually use. Every report written to them becomes a call on your phone. Test the daemon with `POST /report?dryRun=1`, and the server with unit and integration tests against a `_test` database.
+</Aside>
+
+## Commands
+
+In all three repos:
+
+| Command | What it does |
+|---|---|
+| `pnpm lint` / `pnpm format` | Biome check / fix |
+| `pnpm typecheck` | TypeScript type check |
+| `pnpm test` | Vitest. The server tests empty the database at `OUTBRIEF_TEST_DATABASE_URL`, whose name must end in `_test` |
+
+The app also has:
+
+| Command | What it does |
+|---|---|
+| `pnpm build` | Build the frontend to `dist/` |
+| `pnpm tauri build` | Build the desktop installer |
+| `pnpm tauri android init` / `ios init` | Generate the local Android / iOS project |
+| `scripts/build-android.sh` | Build an installable Android APK |
+
+The schema lives only in the server's `db/migrations/NNN_*.sql`. Add a new migration for each change; never edit one that has run.
+
+## Android package
+
+`scripts/build-android.sh` builds a signed arm64 release APK at `dist-android/OutBrief.apk` that installs directly on a phone.
+
+<Steps>
+
+1. Install the toolchain: rustup (`rustup target add aarch64-linux-android`; Homebrew's rust has no Android target), JDK 17, the Android SDK (`platforms;android-36`, `build-tools`) and the NDK, and set `ANDROID_HOME`, `NDK_HOME`, and `JAVA_HOME`.
+
+2. (For call pushes) In the Firebase console, add an Android app for `ai.outbrief.app` and put the downloaded `google-services.json` in `~/.outbrief-android/firebase/`, or point `OUTBRIEF_FIREBASE_CONFIG=<path>` at it.
+
+3. Build. The server URL defaults to `https://api.outbriefapp.com`; use `VITE_OUTBRIEF_SERVER_URL` for your own:
+
+   ```bash
+   VITE_OUTBRIEF_SERVER_URL=https://your-server.example scripts/build-android.sh
+   ```
+
+</Steps>
+
+<Aside type="note">
+- The signing key is created in `~/.outbrief-android/` on the first build and reused after, so new builds install over old ones. It is not in the repo.
+- The APK and the server must use **the same Firebase project**, or the phone registers a push token that never gets pushes.
+- `pnpm tauri android dev` / `build` include pushes only after you `export OUTBRIEF_FIREBASE_CONFIG`.
+</Aside>
+
+## Icon
+
+The Chinese name is 启奏 ("presenting a memorial to the throne"): a gold-edged memorial book unfolded on vermilion, with its vertical lines drawn as sound waves. The agent reports, by voice.
+
+The source is `app-icon.svg` in outbrief-app. After editing it, export a 1024×1024 `app-icon.png` and run `pnpm tauri icon app-icon.json` to regenerate every size. The Android adaptive icon has two layers, `app-icon-android-bg.svg` and `app-icon-android-fg.svg`; update both when the colors or shapes of the main icon change.

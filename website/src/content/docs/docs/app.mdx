@@ -1,0 +1,74 @@
+---
+title: 安装 App
+description: 在 Mac、Android 手机上安装 OutBrief App，或者从源码打包。
+sidebar:
+  order: 1
+---
+
+import { Aside, LinkButton, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+OutBrief App 是一份代码，同时支持桌面和手机（Tauri 2 + React 19）。
+
+<Tabs syncKey="platform">
+<TabItem label="macOS">
+
+<Steps>
+
+1. 从 [下载页](/download/) 下载 `OutBrief_<版本>_aarch64.dmg`（Apple Silicon）。
+2. 打开 dmg，把 OutBrief 拖进「应用程序」。
+3. 安装包没有做 Developer ID 公证，第一次打开可能被系统拦截。在 Finder 里右键 App →「打开」，或者执行：
+
+   ```bash
+   xattr -cr /Applications/OutBrief.app
+   ```
+
+4. 如果这台电脑的 daemon 已经在运行，App 打开后会自动加入同一个账号。
+
+</Steps>
+
+</TabItem>
+<TabItem label="Android">
+
+<Steps>
+
+1. 从 [下载页](/download/) 下载 `OutBrief_<版本>_arm64.apk`，直接安装。
+2. 打开 App，扫描已有设备「设置 → 设备 → 添加设备」里的二维码。
+3. 按 [手机后台响铃](/docs/guides/background-calls/) 打开后台来电相关的权限。
+
+</Steps>
+
+</TabItem>
+<TabItem label="Windows / Linux / iOS">
+
+还没有现成的安装包，需要从源码打包：
+
+```bash
+git clone https://github.com/outbriefapp/outbrief-app
+cd outbrief-app
+pnpm install
+pnpm tauri build          # 桌面安装包，生成在 src-tauri/target/release/bundle/
+```
+
+iOS 用 `pnpm tauri ios init`，然后执行 `pnpm tauri ios build`。这一版的 iOS 还没有来电推送。
+
+需要先装好 Node ≥ 22.18、pnpm 9、Rust stable ≥ 1.85 和 [Tauri 的平台依赖](https://tauri.app/start/prerequisites/)。详见 [本地开发与打包](/docs/development/)。
+
+</TabItem>
+</Tabs>
+
+<Aside type="note">
+只装 App 还接不到来电：跑 Agent 的电脑上还要装 [daemon](/docs/daemon/)，并和 App 配对到同一个账号。
+</Aside>
+
+## 第一次打开
+
+多数情况下，App 会自动加入或创建账号，什么都不用填。只有自动加入不了时，才会出现欢迎页，常见原因有：
+
+- 私有化部署的 server 还没有主人，要填 server 日志里的认领码
+- server 已经关闭注册，要用配对码加入
+- 这台设备刚刚被移除了
+- 本机 daemon 装了但没在运行（启动后会自动加入）
+
+在欢迎页可以改服务地址、创建账号，或者扫码、粘贴配对链接、输入配对码加入。详见 [配对设备](/docs/guides/pairing/)。
+
+<LinkButton href="/docs/guides/calls/" variant="secondary" icon="right-arrow">接下来：接听来电</LinkButton>
