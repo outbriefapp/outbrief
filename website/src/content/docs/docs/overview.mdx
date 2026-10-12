@@ -1,0 +1,72 @@
+---
+title: 工作原理
+description: OutBrief 由哪几部分组成，一通来电从哪里来、到哪里去。
+sidebar:
+  order: 0
+---
+
+import { Card, CardGrid, LinkCard, Steps } from "@astrojs/starlight/components";
+import Architecture from "../../../components/Architecture.astro";
+import Screen from "../../../components/Screen.astro";
+import incoming from "../../../assets/screens/incoming.jpg";
+
+OutBrief 让 AI Agent 用「打电话」的方式向你汇报：任务做完，手机和电脑一起响铃；接起来听它讲重点；挂断时说一句话，回复就回到原来的会话。
+
+<Screen src={incoming} alt="Agent 完成任务后，桌面和手机同时响铃" caption="任务完成后，桌面和手机一起响铃。" />
+
+## 三个组成部分
+
+<Architecture />
+
+<CardGrid>
+  <Card title="outbrief-daemon" icon="laptop">
+    装在跑 Agent 的电脑上，常驻后台。收到 Agent 的完成汇报后，用你自己配的大模型写成口播简报，加密后交给 server。挂断后的回复也由它送回原会话。
+  </Card>
+  <Card title="outbrief-server" icon="random">
+    中转站。只存放和转发密文，没有密钥，看不到汇报、简报和回复。来电结束后，密文立即删除。可以用官方服务器，也可以自己部署。
+  </Card>
+  <Card title="outbrief-app" icon="phone">
+    装在手机和电脑上。负责响铃、播报语音和卡片、回答你的追问，挂断时把你的回复加密发回去。
+  </Card>
+</CardGrid>
+
+## 一通来电的经过
+
+<Steps>
+
+1. **Agent 做完任务**
+
+   Claude Code 或 Codex 结束一轮对话，或者 Multica 上的 Agent 发出汇报评论。
+
+2. **daemon 写简报**
+
+   daemon 用你配置的大模型，把汇报整理成一段口播、几张要点卡片，以及需要你拍板的问题，然后加密发给 server。
+
+3. **你的设备一起响铃**
+
+   账号下所有设备同时响铃，在哪台接都行。一台接起，其他设备马上停止响铃。
+
+4. **接听、追问**
+
+   App 念简报，卡片同步翻页。你可以随时打字打断提问，大模型会根据汇报全文回答。
+
+5. **挂断即回复**
+
+   通话里说的话和做的决定会整理成一条回复，你可以先改一改再发。daemon 会在原会话里接着运行 Agent，Multica 的任务则会以你的身份回复到原 issue。
+
+</Steps>
+
+## 隐私
+
+- **没有登录**：账号是匿名的，设备之间扫码配对。
+- **端到端加密**：内容只在你的电脑和你的设备之间加密传输，server 只转发密文。
+- **大模型和语音用你自己的**：简报在你的电脑上生成，语音在你的设备上合成，追问直接请求你配置的接口，都不经过 server。
+
+详细说明见 [加密与隐私](/docs/guides/privacy/)。
+
+## 下一步
+
+<CardGrid>
+  <LinkCard title="快速开始" description="装好三个组件，接到第一通来电。" href="/docs/quick-start/" />
+  <LinkCard title="下载 App" description="macOS 和 Android 安装包。" href="/download/" />
+</CardGrid>

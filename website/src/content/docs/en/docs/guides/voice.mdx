@@ -1,0 +1,72 @@
+---
+title: Voice settings
+description: Choose the report language and a voice platform. 12 built-in platforms, or paste a cURL for any TTS.
+sidebar:
+  order: 6
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+All speech is requested from this device straight to the platform you pick, so the server never sees the brief. **By default it uses free Azure voices, with nothing to set up.**
+
+Settings → Voice runs top to bottom: report language → platform → the platform's settings → model → voice → speed → test synthesis.
+
+## Report language
+
+The report language sets the language a brief is written and spoken in, whatever language the report itself is in. Answers during a call use it too.
+
+- 90 languages and regions, such as Taiwan Chinese or Mexican Spanish.
+- Follows the system by default.
+- Changes sync to the daemon on your computer and apply to the next brief.
+
+## Pick a platform
+
+<Tabs>
+<TabItem label="Built-in platforms">
+
+Pick from the list. Each platform keeps its own settings, so switching never loses a key or voice you already set.
+
+| Platform | Needs | Notes |
+|---|---|---|
+| **Azure** | Nothing | Default and free. Voices follow the report language |
+| ElevenLabs | API key | Any voice speaks every supported language |
+| MiniMax | API key | China and international keys are separate. Voices are per language |
+| Doubao | API key (new console) or App ID + access token (old console) | 2.0 voices detect 30+ languages |
+| Alibaba Cloud Bailian | API key | Beijing and Singapore keys are separate. No speed control |
+| Tencent Cloud | SecretId + SecretKey | Chinese and English only |
+| OpenAI | API key | The endpoint can point at a proxy or compatible service |
+| Gemini | API key | No speed control |
+| Grok | API key | 20 languages |
+| ChatTTS | Self-hosted URL | No speed control |
+| IndexTTS | Self-hosted URL (vLLM-Omni) | The voice is a reference audio you upload |
+| CosyVoice | Self-hosted URL | The sample rate must match the server's model |
+
+</TabItem>
+<TabItem label="Custom endpoint">
+
+Any TTS works by pasting one cURL:
+
+<Steps>
+
+1. Paste the curl example from the platform's docs and click Import.
+2. The app finds the text, voice, and speed fields. If it guessed wrong, tap the right value in those three rows.
+3. Pick the response: the body is the audio, or a field in JSON (enter its path, like `data.audio`, and pick Base64, hex, or audio URL).
+4. For raw PCM without a header, pick raw PCM (16-bit mono) and enter the sample rate.
+5. Click Test synthesis to hear it.
+
+</Steps>
+
+The imported request is shown read-only, exactly as it will be sent. To change it, paste again.
+
+</TabItem>
+</Tabs>
+
+## Voice and speed
+
+- **Voice**: grouped into female and male, shown by name rather than code. Platforms with cloned voices (MiniMax, Doubao, ElevenLabs, and more) take your own voice id, or load the voices in your account.
+- **Speed**: a 0.5×–2× slider, clamped to each platform's range. Platforms without speed control say so under the slider.
+- **Test synthesis**: speaks one sentence with the settings on screen, without saving. On failure it shows what the endpoint returned.
+
+<Aside type="tip">
+API keys stay on this device. After saving, only `sk-…abcd` is shown, with a button to replace it.
+</Aside>

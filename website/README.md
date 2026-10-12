@@ -1,0 +1,55 @@
+# outbrief-website
+
+OutBrief 官网和文档站：<https://outbriefapp.com>。用户交流在 [Discord](https://discord.gg/TG8qHzdv6)。
+
+用 [Astro](https://astro.build) + [Starlight](https://starlight.astro.build) 构建，部署在 Cloudflare Pages（GitHub 集成 `outbriefapp/outbrief` 的 `website/` 目录：`main` 发布生产，改到 `website/` 的 PR 自动生成预览地址）。
+
+## 本地开发
+
+需要 Node ≥ 22.18（见 `.nvmrc`）、pnpm 9。
+
+```bash
+pnpm install
+pnpm dev        # http://localhost:4321
+pnpm build      # 输出到 dist/，同时生成 Pagefind 搜索索引
+pnpm preview    # 预览 dist/，搜索只在 build 之后可用
+```
+
+## 目录
+
+| 路径 | 内容 |
+|---|---|
+| `src/content/docs/` | 中文页面（默认语言，挂在根路径） |
+| `src/content/docs/en/` | 英文页面，挂在 `/en/`。缺英文版的页面（参考、ADR）回退显示中文 |
+| `src/content/docs/docs/` | 文档：工作原理、快速开始；`guides/` 使用指南；安装与部署；`reference/` 接口和源码参考；`adr/` |
+| `src/components/Architecture.astro` | 文档里的三段式架构图 |
+| `src/components/Screen.astro` | 文档配图（带说明文字），图片在 `src/assets/screens/`，截自首页宣传视频 |
+| `src/components/PromoVideo.astro` | 首页宣传视频 |
+| `public/media/` | 宣传视频和封面图（单个文件不能超过 Cloudflare Pages 的 25 MiB 上限） |
+| `public/proposal.html` | 最初的方案汇报 |
+
+同一个仓库里 `app/`、`server/`、`daemon/` 的使用文档和 ADR 都在这里维护，各目录的 README 只留简介和官网链接。改了接口、命令或安装步骤时，在同一个 PR 里同步改文档。
+
+## 常用命令
+
+| 命令 | 作用 |
+|---|---|
+| `pnpm lint` / `pnpm format` | Biome 检查 / 自动修复 |
+| `pnpm check` | `astro check`（类型和内容 schema） |
+| `pnpm build` | 构建静态站点 |
+
+## Cloudflare Pages 配置
+
+| 项 | 值 |
+|---|---|
+| 根目录 | `website` |
+| 构建命令 | `pnpm build` |
+| 输出目录 | `dist` |
+| 环境变量 | `NODE_VERSION=22`（Node 版本也可由 `.nvmrc` 决定） |
+| 生产分支 | `main` |
+| 构建监听路径 | 包含 `website/*`（其他目录的改动不触发构建） |
+| 自定义域名 | `outbriefapp.com`；`www.outbriefapp.com` 301 跳转到 apex |
+
+## License
+
+[OutBrief License](../LICENSE)（基于 Apache License 2.0 并附加条件）。

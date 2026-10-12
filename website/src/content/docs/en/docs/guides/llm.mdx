@@ -1,0 +1,67 @@
+---
+title: LLM settings
+description: Pick an LLM to write call briefs and answer questions during calls.
+sidebar:
+  order: 5
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+import Screen from "../../../../../components/Screen.astro";
+import settings from "../../../../../assets/screens/settings.jpg";
+
+One LLM does two jobs:
+
+- **Writing briefs**: the daemon on your computer calls it to turn the agent's report into speech and cards.
+- **Answering questions**: when you type during a call, the app calls it directly from this device.
+
+Both go straight to the endpoint you configure, never through the server.
+
+<Screen src={settings} alt="The LLM and voice settings pages" caption="Left: Settings → LLM. Right: Settings → Voice." />
+
+## Steps
+
+<Steps>
+
+1. Open Settings → LLM.
+2. Pick a provider:
+   <Tabs>
+   <TabItem label="Built-in providers">
+   Pick from the list and the endpoint is filled in: OpenAI, Claude, Grok, DeepSeek, Gemini, OpenRouter, Qwen, Doubao, Kimi, Zhipu GLM, SiliconFlow, Vercel AI Gateway, and a local Ollama.
+   </TabItem>
+   <TabItem label="Custom endpoint">
+   Any OpenAI-compatible service works, including your own. A bare domain gets `/v1` added; a pasted `…/chat/completions` is trimmed back to the base URL.
+   </TabItem>
+   </Tabs>
+3. Enter the API key. Ollama does not check keys, so any value works.
+4. Pick a model. The list starts with recommended models and, once the key is in, every model that key can use. You can also type any model id.
+5. Click Test connection, then save.
+
+</Steps>
+
+Saving also updates the daemon on this computer. **The next brief uses it right away**, with no restart.
+
+## Brief output mode
+
+A brief is structured JSON. There are two ways to get it, and Test connection tells you whether the current one works:
+
+| Mode | Good for | How |
+|---|---|---|
+| **JSON Schema** | OpenAI, Gemini, Grok, Qwen, Doubao, Kimi, Ollama, and more | The endpoint enforces the format. Most reliable |
+| **JSON mode** | DeepSeek, Zhipu, Claude's compatible endpoint, and more | The format goes into the prompt and the result is checked |
+
+When JSON Schema fails the test, a button offers to switch to JSON mode and test again.
+
+## FAQ
+
+**What if no LLM is set?**
+Calls still ring, without a brief: the app reads the raw report. Questions during a call fail and point you here.
+
+**Does changing it on the phone change the computer?**
+When the phone uses another computer's daemon, it only saves on the phone by default. Tick the option to also use it for that computer's briefs to send it there, encrypted. The two may not reach the same endpoints; a `127.0.0.1` address only works on the computer itself.
+
+**Is the key safe?**
+It stays on this device and the local daemon and never crosses the server. After saving, only `sk-…abcd` is shown.
+
+<Aside type="tip">
+Clear removes the setting from this device and the daemon together.
+</Aside>

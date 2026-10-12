@@ -1,0 +1,67 @@
+---
+title: 大模型设置
+description: 选一个大模型，用来生成来电简报、回答通话中的追问。
+sidebar:
+  order: 5
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+import Screen from "../../../../components/Screen.astro";
+import settings from "../../../../assets/screens/settings.jpg";
+
+同一个大模型有两个用处：
+
+- **写简报**：电脑上的 daemon 调用它，把 Agent 的汇报写成口播和卡片。
+- **回答追问**：通话中你打字提问时，App 在这台设备上直接调用它。
+
+两者都直接请求你配置的接口，不经过 server。
+
+<Screen src={settings} alt="大模型和语音设置页" caption="左：设置 → 大模型；右：设置 → 语音。" />
+
+## 设置步骤
+
+<Steps>
+
+1. 打开「设置 → 大模型」。
+2. 选服务商：
+   <Tabs>
+   <TabItem label="内置服务商">
+   在下拉框里选，接口地址会自动填好。支持 OpenAI、Claude、Grok、DeepSeek、Gemini、OpenRouter、通义千问、豆包、Kimi、智谱 GLM、硅基流动、Vercel AI Gateway，以及本机的 Ollama。
+   </TabItem>
+   <TabItem label="自定义接口">
+   任何兼容 OpenAI 接口的服务都可以，包括你自己部署的。只填域名会自动补上 `/v1`；粘贴了 `…/chat/completions` 也会自动截回到 base URL。
+   </TabItem>
+   </Tabs>
+3. 填 API Key。Ollama 不校验 Key，随便填一个就行。
+4. 选模型。下拉框里先列出推荐模型，填好 Key 后还会列出这个 Key 能用的所有模型。也可以直接填模型 id。
+5. 点「测试连接」，通过后再保存。
+
+</Steps>
+
+保存后，配置会同步给本机 daemon，**下一份简报立即生效**，不用重启。
+
+## 简报输出方式
+
+简报需要模型输出结构化 JSON，有两种方式可选，测试连接时会告诉你当前方式能不能用：
+
+| 方式 | 适合 | 说明 |
+|---|---|---|
+| **JSON Schema** | OpenAI、Gemini、Grok、通义千问、豆包、Kimi、Ollama 等 | 由接口强制约束格式，最稳 |
+| **JSON 模式** | DeepSeek、智谱、Claude 的兼容接口等 | 把格式要求写进提示词，再校验结果 |
+
+JSON Schema 测试失败时，会出现「换成 JSON 模式再测」按钮，点一下就会切换并重新测试。
+
+## 常见问题
+
+**没配大模型会怎样？**
+来电照常响，只是没有简报，接听后会直接念汇报原文。通话中提问会失败，并提示你来这里填写。
+
+**在手机上改，会影响电脑吗？**
+手机连的是另一台电脑的 daemon 时，默认只改这台手机，不动电脑上写简报用的模型。勾选「同时用于「电脑名」生成简报」，才会加密后转给那台电脑。两边能访问的接口不一定一样，比如只有电脑本机能访问的 `127.0.0.1` 地址。
+
+**Key 安全吗？**
+Key 只存在这台设备和本机 daemon 里，不经过 server。保存后只显示「已保存 sk-…abcd」。
+
+<Aside type="tip">
+「清除配置」会把本机和 daemon 里的配置一起清掉。
+</Aside>
