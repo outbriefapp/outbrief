@@ -9,6 +9,9 @@
 # 签名密钥第一次打包时生成在 ~/.outbrief-android/（release.jks 和随机密码 release.pass，都不在仓库里）；
 # 之后一直用它签，手机上的 App 才能覆盖升级。
 # src-tauri/gen/ 不进仓库：没有就先 tauri android init，再补上相机 / 麦克风权限和 release 签名。
+# 来电推送（Firebase Cloud Messaging）用 Firebase 项目里 Android 应用的 google-services.json，
+# 默认读 ~/.outbrief-android/firebase/google-services.json，用 OUTBRIEF_FIREBASE_CONFIG=<路径> 换；
+# 它不在仓库里。没有这个文件，打出来的包收不到推送，只靠事件流接来电。
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -59,6 +62,14 @@ if ! grep -q 'signingConfigs' "$GRADLE"; then
     perl -0pi -e 's|^import java.util.Properties|import java.io.FileInputStream\nimport java.util.Properties|m;
 s|(\n    buildTypes \{)|\n    signingConfigs {\n        create("release") {\n            val keystoreProperties = Properties().apply {\n                load(FileInputStream(rootProject.file("keystore.properties")))\n            }\n            keyAlias = keystoreProperties["keyAlias"] as String\n            keyPassword = keystoreProperties["keyPassword"] as String\n            storeFile = file(keystoreProperties["storeFile"] as String)\n            storePassword = keystoreProperties["storePassword"] as String\n        }\n    }$1|;
 s|(getByName\("release"\) \{)|$1\n            signingConfig = signingConfigs.getByName("release")|' "$GRADLE"
+fi
+
+FIREBASE_CONFIG=${OUTBRIEF_FIREBASE_CONFIG:-$HOME/.outbrief-android/firebase/google-services.json}
+if [ -f "$FIREBASE_CONFIG" ]; then
+    export OUTBRIEF_FIREBASE_CONFIG="$FIREBASE_CONFIG"
+else
+    unset OUTBRIEF_FIREBASE_CONFIG
+    printf '[android] %s\n' "没有 $FIREBASE_CONFIG：这个包没有来电推送" >&2
 fi
 
 VITE_OUTBRIEF_SERVER_URL=${VITE_OUTBRIEF_SERVER_URL:-https://api.outbriefapp.com} \

@@ -101,6 +101,12 @@ export const zh = {
     unrestricted: "不受限制",
     restricted: "可能被系统停止",
     change: "去设置",
+    push: "推送唤醒",
+    pushHint:
+      "服务器用 Google 推送叫醒手机，App 被划掉、手机休眠时也能响铃。需要手机能用 Google Play 服务。",
+    pushOn: "已开启",
+    pushPending: "未开启",
+    pushUnavailable: "这个安装包不支持",
   },
 
   incoming: {

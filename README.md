@@ -259,6 +259,7 @@ pnpm dev            # 只起前端（浏览器里调 UI）
 
 - 服务地址默认 `https://api.outbriefapp.com`，用 `VITE_OUTBRIEF_SERVER_URL` 换；手机连不到电脑上的 `localhost`。装好后在电脑上的 App 里打开「设置 → 设备 → 添加设备」，手机扫码加入同一个账号。
 - `src-tauri/gen/` 不进仓库：脚本在没有时先 `tauri android init`，每次按 `app-icon.json` 重新生成图标，再补上相机 / 麦克风权限（扫码、录音）和 release 签名。签名密钥第一次打包时生成在 `~/.outbrief-android/`（含随机密码，不在仓库里），之后一直用它签，新包才能覆盖安装。
+- 来电推送（outbrief-server 的 ADR 0010）：App 被划掉、手机休眠时，server 用 Firebase Cloud Messaging 叫醒手机响铃。要在 Firebase 控制台给 `ai.outbrief.app` 加一个 Android 应用，下载它的 `google-services.json` 放到 `~/.outbrief-android/firebase/google-services.json`，或者用 `OUTBRIEF_FIREBASE_CONFIG=<路径>` 指定。文件不进仓库，没有它打出来的包没有推送。同一个 Firebase 项目的服务账号密钥配给 server 的 `OUTBRIEF_FCM_SERVICE_ACCOUNT`。手机要有 Google Play 服务；「设置 → 后台来电 → 推送唤醒」显示是否已开启。
 - Android 的系统 WebView 用 Google Play 服务实现 `BarcodeDetector`，App 没声明时一扫码就闪退（很多手机也没有 Play 服务），所以 Android 版扫码用 `qr-scanner` 自带的解码 worker（`src/components/QrScanner.tsx`）。
 
 ## License
